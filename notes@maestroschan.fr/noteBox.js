@@ -25,6 +25,11 @@ const MIN_WIDTH = 200;
 // Delay (in milliseconds) between the last keystroke and the saving of the text
 const SAVE_DELAY = 1000;
 
+// Tasks are lines starting with one of these characters, followed by a space.
+// They're stored as plain text, so the notes files stay readable.
+const TASK_TODO = '☐';
+const TASK_DONE = '☑';
+
 //------------------------------------------------------------------------------
 
 function stringFromArray(data){
@@ -33,6 +38,31 @@ function stringFromArray(data){
 	} else {
 		return data.toString();
 	}
+}
+
+function isTaskBox(char) {
+	return char === TASK_TODO || char === TASK_DONE;
+}
+
+/*
+ * ClutterText positions are counted in characters, not in UTF-16 code units,
+ * so the text is handled as an array of characters.
+ */
+function getLineStart(chars, pos) {
+	while (pos > 0 && chars[pos - 1] !== '\n') {
+		pos--;
+	}
+	return pos;
+}
+
+function getLineEnd(chars, pos) {
+	let end = chars.indexOf('\n', pos);
+	return end === -1 ? chars.length : end;
+}
+
+function getCursorPosition(clutterText, chars) {
+	let pos = clutterText.get_cursor_position();
+	return pos < 0 ? chars.length : pos;
 }
 
 /*
@@ -126,6 +156,9 @@ export class NoteBox {
 			this.noteEntry.connect('leave-event', this._leaveKeyFocus.bind(this));
 		}
 		this.actor.connect('notify::hover', this._onHoverChanged.bind(this));
+		// Captured before the text gets it, so a click on a box doesn't move
+		// the cursor, and Enter in a task can be replaced by a new task
+		this.noteEntry.connect('captured-event', this._onEntryCapturedEvent.bind(this));
 
 		//----------------------------------------------------------------------
 
@@ -152,6 +185,8 @@ export class NoteBox {
 	 *   but with random coordinates, an empty text, and an harcoded size.
 	 * - The 'move' area, which isn't styled as a button but looks like an empty
 	 *   space. It simulates a kind of wacky window dragging.
+	 * - The 'task' button, which turns the current line into a task (a line
+	 *   with a checkbox), or back into regular text.
 	 * - The 'options' button, showing a menu defined in menus.js
 	 * - The 'hide' button, which hides this note only. It can be shown again
 	 *   from the menu of the icon in the top bar.
@@ -190,6 +225,14 @@ export class NoteBox {
 		});
 		this._buttonsBox.add_child(this.moveBox);
 
+		let btnTask = new Menus.NoteRoundButton(
+			this,
+			'checkbox-checked-symbolic',
+			_("Task")
+		);
+		btnTask.actor.connect('clicked', this._toggleTaskOnCurrentLine.bind(this));
+		this._buttonsBox.add_child(btnTask.actor);
+
 		this._btnOptions = new Menus.NoteRoundButton(
 			this,
 			'view-more-symbolic',
@@ -217,6 +260,7 @@ export class NoteBox {
 
 		this._headerButtons = [
 			btnNew.actor,
+			btnTask.actor,
 			this._btnOptions.actor,
 			btnHide.actor,
 			btnDelete.actor,
@@ -365,6 +409,9 @@ export class NoteBox {
 			return _("Empty note");
 		}
 		firstLine = firstLine.trim();
+		if (isTaskBox(firstLine[0])) {
+			firstLine = firstLine.substring(1).trim();
+		}
 		if (firstLine.length > 40) {
 			firstLine = firstLine.substring(0, 40) + '…';
 		}
@@ -441,6 +488,104 @@ export class NoteBox {
 			this._saveText();
 			return GLib.SOURCE_REMOVE;
 		});
+	}
+
+	//--------------------------------------------------------------------------
+	// Tasks (lines starting with a checkbox) ----------------------------------
+
+	_onEntryCapturedEvent (actor, event) {
+		switch (event.type()) {
+			case Clutter.EventType.BUTTON_PRESS:
+				return this._onTaskBoxPress(event);
+			case Clutter.EventType.KEY_PRESS:
+				return this._onTaskEnterPress(event);
+			default:
+				return Clutter.EVENT_PROPAGATE;
+		}
+	}
+
+	/*
+	 * A click on the box of a task checks or unchecks it.
+	 */
+	_onTaskBoxPress (event) {
+		if (event.get_button() !== 1) { return Clutter.EVENT_PROPAGATE; }
+		let clutterText = this.noteEntry.get_clutter_text();
+		let [stageX, stageY] = event.get_coords();
+		let [ok, x, y] = clutterText.transform_stage_point(stageX, stageY);
+		if (!ok) { return Clutter.EVENT_PROPAGATE; }
+
+		let chars = Array.from(clutterText.get_text());
+		// The position is the boundary nearest to the click, so a click on the
+		// box gives the position just before or just after it
+		let pos = clutterText.coords_to_position(x, y);
+		let lineStart = getLineStart(chars, pos);
+		if (pos - lineStart > 1 || !isTaskBox(chars[lineStart])) {
+			return Clutter.EVENT_PROPAGATE;
+		}
+
+		let box = chars[lineStart] === TASK_TODO ? TASK_DONE : TASK_TODO;
+		let cursor = getCursorPosition(clutterText, chars);
+		clutterText.delete_text(lineStart, lineStart + 1);
+		clutterText.insert_text(box, lineStart);
+		clutterText.set_cursor_position(cursor);
+		this._redraw();
+		return Clutter.EVENT_STOP;
+	}
+
+	/*
+	 * Pressing Enter in a task creates a new task below it. Pressing Enter in
+	 * an empty task removes its box, to end the list. Shift+Enter inserts a
+	 * regular line break.
+	 */
+	_onTaskEnterPress (event) {
+		let key = event.get_key_symbol();
+		if (key !== Clutter.KEY_Return && key !== Clutter.KEY_KP_Enter) {
+			return Clutter.EVENT_PROPAGATE;
+		}
+		if (event.get_state() & Clutter.ModifierType.SHIFT_MASK) {
+			return Clutter.EVENT_PROPAGATE;
+		}
+		let clutterText = this.noteEntry.get_clutter_text();
+		if (clutterText.get_selection()) { return Clutter.EVENT_PROPAGATE; }
+
+		let chars = Array.from(clutterText.get_text());
+		let pos = getCursorPosition(clutterText, chars);
+		let lineStart = getLineStart(chars, pos);
+		if (!isTaskBox(chars[lineStart]) || pos === lineStart) {
+			return Clutter.EVENT_PROPAGATE;
+		}
+
+		let lineEnd = getLineEnd(chars, lineStart);
+		let taskText = chars.slice(lineStart + 1, lineEnd).join('').trim();
+		if (taskText === '') {
+			clutterText.delete_text(lineStart, lineEnd);
+			clutterText.set_cursor_position(lineStart);
+		} else {
+			clutterText.insert_text('\n' + TASK_TODO + ' ', pos);
+			clutterText.set_cursor_position(pos + 3);
+		}
+		return Clutter.EVENT_STOP;
+	}
+
+	/*
+	 * Adds a box at the beginning of the line where the cursor is, or removes
+	 * it if the line is already a task.
+	 */
+	_toggleTaskOnCurrentLine () {
+		let clutterText = this.noteEntry.get_clutter_text();
+		let chars = Array.from(clutterText.get_text());
+		let pos = getCursorPosition(clutterText, chars);
+		let lineStart = getLineStart(chars, pos);
+
+		if (isTaskBox(chars[lineStart])) {
+			let length = chars[lineStart + 1] === ' ' ? 2 : 1;
+			clutterText.delete_text(lineStart, lineStart + length);
+			clutterText.set_cursor_position(Math.max(lineStart, pos - length));
+		} else {
+			clutterText.insert_text(TASK_TODO + ' ', lineStart);
+			clutterText.set_cursor_position(pos + 2);
+		}
+		this._getKeyFocus();
 	}
 
 	//--------------------------------------------------------------------------
