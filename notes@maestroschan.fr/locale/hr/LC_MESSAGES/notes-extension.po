@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: notes-extension\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:26+0200\n"
+"POT-Creation-Date: 2026-10-21 11:38+0200\n"
 "PO-Revision-Date: 2020-01-24 23:57+0100\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: \n"
@@ -19,6 +19,10 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr ""
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr "Prikaži bilješke"
@@ -27,21 +31,60 @@ msgstr "Prikaži bilješke"
 msgid "Notes extension error: failed to load a note"
 msgstr ""
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
-msgstr "Bilješke"
+#: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
+msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
+msgid "Undo"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Note options"
+msgid "Note hidden"
+msgstr "Opcije za bilješke"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "New note"
+msgstr "Prikaži bilješke"
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "Search notes…"
+msgstr "Prikaži bilješke"
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
+msgstr "Postavke"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "No matching note"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
 msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr "Prilagođena boja"
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr "Postavke"
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
 #: notes@maestroschan.fr/prefs.ui
@@ -52,6 +95,14 @@ msgstr "Primijeni"
 msgid "Font size"
 msgstr "Veličina fonta"
 
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
+msgstr ""
+
 #: notes@maestroschan.fr/noteBox.js
 msgid "Type here…"
 msgstr "Tipkaj ovdje …"
@@ -61,27 +112,41 @@ msgid "New"
 msgstr "Nova"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
-msgstr "Izbriši"
+msgid "Task"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "Opcije za bilješke"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Resize"
-msgstr "Promijeni veličinu"
+msgid "Hide"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Empty note"
-msgstr ""
+msgid "Delete"
+msgstr "Izbriši"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Resize"
+msgstr "Promijeni veličinu"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "Izbrisati ovu bilješku?"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
+#, fuzzy
+#| msgid "Note options"
+msgid "Note title"
+msgstr "Opcije za bilješke"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Empty note"
 msgstr ""
 
 #: notes@maestroschan.fr/prefs.js
@@ -205,6 +270,10 @@ msgstr ""
 #, fuzzy
 msgid "Bring back to the primary monitor"
 msgstr "Vrati sve bilješke na glavni monitor"
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
+msgstr "Bilješke"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Sticky notes for the GNOME Shell desktop."

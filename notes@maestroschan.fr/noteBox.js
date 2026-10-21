@@ -66,6 +66,23 @@ function getCursorPosition(clutterText, chars) {
 }
 
 /*
+ * Returns [number of checked tasks, total number of tasks] in the text.
+ */
+function countTasks(text) {
+	let done = 0;
+	let total = 0;
+	text.split('\n').forEach((line) => {
+		if (isTaskBox(line[0])) {
+			total++;
+			if (line[0] === TASK_DONE) {
+				done++;
+			}
+		}
+	});
+	return [done, total];
+}
+
+/*
  * This class stands for one note. The note's id corresponds to the name of
  * files where its data will be stored. The note's state is loaded and the note
  * is built, then the note's text is loaded.
@@ -147,14 +164,11 @@ export class NoteBox {
 		//----------------------------------------------------------------------
 
 		this._grabHelper = new GrabHelper.GrabHelper(this.noteEntry)
-		if (State.autoFocus) { // TODO dynamically update this setting
-			this.noteEntry.connect('enter-event', this._getKeyFocus.bind(this));
-			this.noteEntry.connect('leave-event', this._leaveKeyFocus.bind(this));
-		} else {
-			this.noteEntry.connect('button-press-event', this._getKeyFocus.bind(this));
-			// this.noteEntry.connect('key-focus-in', this._redraw.bind(this)); // FIXME doesn't work
-			this.noteEntry.connect('leave-event', this._leaveKeyFocus.bind(this));
-		}
+		// The 'auto-focus' setting is read on each event, so changing it
+		// doesn't require to reload the extension
+		this.noteEntry.connect('enter-event', this._onEntryEnter.bind(this));
+		this.noteEntry.connect('button-press-event', this._getKeyFocus.bind(this));
+		this.noteEntry.connect('leave-event', this._leaveKeyFocus.bind(this));
 		this.actor.connect('notify::hover', this._onHoverChanged.bind(this));
 		// Captured before the text gets it, so a click on a box doesn't move
 		// the cursor, and Enter in a task can be replaced by a new task
@@ -216,13 +230,20 @@ export class NoteBox {
 		this._buttonsBox.add_child(btnNew.actor);
 
 		// Not an St.Button, its click gesture would consume the press events
-		this.moveBox = new St.Widget({
+		this.moveBox = new St.BoxLayout({
 			x_expand: true,
 			reactive: true,
 			track_hover: true,
 			style_class: 'notesTitleButton',
-			// label: 'example title'
 		});
+		this._titleLabel = new St.Label({
+			text: this._title,
+			x_expand: true,
+			y_align: Clutter.ActorAlign.CENTER,
+			style_class: 'notesTitleLabel',
+		});
+		this._titleLabel.clutter_text.ellipsize = Pango.EllipsizeMode.END;
+		this.moveBox.add_child(this._titleLabel);
 		this._buttonsBox.add_child(this.moveBox);
 
 		let btnTask = new Menus.NoteRoundButton(
@@ -399,9 +420,93 @@ export class NoteBox {
 	}
 
 	/*
-	 * Returns the first non-empty line of the note, to identify it in menus.
+	 * Returns the title of the note, or its first non-empty line, followed by
+	 * the progress of its tasks, to identify it in menus.
 	 */
 	getTitle () {
+		let title = this._title || this._getFirstLine();
+		let [done, total] = countTasks(this.noteEntry.get_text());
+		if (total > 0) {
+			title += ' (' + done + '/' + total + ')';
+		}
+		return title;
+	}
+
+	/*
+	 * Tells if the title or the text of the note contains the query, which is
+	 * expected to be lowercase.
+	 */
+	matches (query) {
+		return this._title.toLowerCase().includes(query)
+		    || this.noteEntry.get_text().toLowerCase().includes(query);
+	}
+
+	openEditTitleDialog () {
+		let dialog = new Dialog.CustomModalDialog(
+			_("Note title"),
+			_("Leave empty to show no title."),
+			_("Apply"),
+			this.setTitle.bind(this),
+			this._title
+		);
+		dialog.open();
+	}
+
+	setTitle (title) {
+		this._title = title.trim();
+		this._titleLabel.text = this._title;
+		this._saveState();
+		if (this.pinned) {
+			State.notesManager.updatePinnedNotes();
+		}
+	}
+
+	/*
+	 * A pinned note is shown in the top bar and in the overview, depending on
+	 * the settings.
+	 */
+	setPinned (pinned) {
+		this.pinned = pinned;
+		this._saveState();
+		State.notesManager.updatePinnedNotes();
+	}
+
+	isEmpty () {
+		return this.noteEntry.get_text().trim() === '';
+	}
+
+	/*
+	 * Returns the non-empty lines of the note, without the spaces around them.
+	 */
+	getTextLines () {
+		return this.noteEntry.get_text().split('\n')
+			.map((line) => line.trim())
+			.filter((line) => line !== '');
+	}
+
+	getPinnedTitle () {
+		return this._title;
+	}
+
+	/*
+	 * Returns the whole note on one line, for the scrolling text in the top bar.
+	 */
+	getInlineText () {
+		let text = this.getTextLines().join('  ·  ');
+		if (this._title !== '') {
+			text = this._title + ' — ' + text;
+		}
+		return text;
+	}
+
+	/*
+	 * Returns the background color ('r,g,b') and the text color (CSS).
+	 */
+	getColors () {
+		return [this.customColor, this._fontColor];
+	}
+
+	_getFirstLine () {
 		let firstLine = this.noteEntry.get_text().split("\n").find((line) => {
 			return line.trim() !== '';
 		});
@@ -419,9 +524,10 @@ export class NoteBox {
 	}
 
 	fixState () {
+		this._monitor = Main.layoutManager.primaryIndex;
 		let outX = (this._x < 0 || this._x > Main.layoutManager.primaryMonitor.width - 20);
 		let outY = (this._y < 0 || this._y > Main.layoutManager.primaryMonitor.height - 20);
-		if (outX || outY) {
+		if (outX || outY || Number.isNaN(this._x) || Number.isNaN(this._y)) {
 			[this._x, this._y] = this._computeRandomPosition();
 			this._setNotePosition();
 		}
@@ -467,16 +573,25 @@ export class NoteBox {
 			this._grabHelper.grab({ actor: this.noteEntry });
 			this.noteEntry.grab_key_focus();
 		}
-		this._redraw();
+		this.raise();
+	}
+
+	_onEntryEnter () {
+		if (State.settings.get_boolean('auto-focus')) {
+			this._getKeyFocus();
+		}
 	}
 
 	_leaveKeyFocus () {
 		this._grabHelper.ungrab({ actor: this.noteEntry });
 	}
 
-	_redraw () {
+	/*
+	 * Puts the note above the other notes. Nothing is saved here: the
+	 * actions which change the note save it themselves.
+	 */
+	raise () {
 		this.actor.get_parent().set_child_above_sibling(this.actor, null);
-		this.onlySave();
 	}
 
 	_onTextChanged () {
@@ -486,6 +601,9 @@ export class NoteBox {
 		this._saveTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, SAVE_DELAY, () => {
 			this._saveTimeoutId = null;
 			this._saveText();
+			if (this.pinned) {
+				State.notesManager.updatePinnedNotes();
+			}
 			return GLib.SOURCE_REMOVE;
 		});
 	}
@@ -498,10 +616,45 @@ export class NoteBox {
 			case Clutter.EventType.BUTTON_PRESS:
 				return this._onTaskBoxPress(event);
 			case Clutter.EventType.KEY_PRESS:
-				return this._onTaskEnterPress(event);
+				return this._onEntryKeyPress(event);
 			default:
 				return Clutter.EVENT_PROPAGATE;
 		}
+	}
+
+	/*
+	 * Keyboard shortcuts available while typing in the note:
+	 * - Ctrl+T turns the current line into a task, or back into text;
+	 * - Ctrl+Plus and Ctrl+Minus change the font size;
+	 * - Escape gives the keyboard focus back.
+	 */
+	_onEntryKeyPress (event) {
+		let key = event.get_key_symbol();
+		if (key === Clutter.KEY_Escape) {
+			this._leaveKeyFocus();
+			global.stage.set_key_focus(null);
+			return Clutter.EVENT_STOP;
+		}
+		if (event.get_state() & Clutter.ModifierType.CONTROL_MASK) {
+			switch (key) {
+				case Clutter.KEY_t:
+				case Clutter.KEY_T:
+					this._toggleTaskOnCurrentLine();
+					return Clutter.EVENT_STOP;
+				case Clutter.KEY_plus:
+				case Clutter.KEY_equal:
+				case Clutter.KEY_KP_Add:
+					this.changeFontSize(1);
+					return Clutter.EVENT_STOP;
+				case Clutter.KEY_minus:
+				case Clutter.KEY_KP_Subtract:
+					this.changeFontSize(-1);
+					return Clutter.EVENT_STOP;
+				default:
+					break;
+			}
+		}
+		return this._onTaskEnterPress(event);
 	}
 
 	/*
@@ -528,7 +681,7 @@ export class NoteBox {
 		clutterText.delete_text(lineStart, lineStart + 1);
 		clutterText.insert_text(box, lineStart);
 		clutterText.set_cursor_position(cursor);
-		this._redraw();
+		this.raise();
 		return Clutter.EVENT_STOP;
 	}
 
@@ -588,11 +741,42 @@ export class NoteBox {
 		this._getKeyFocus();
 	}
 
+	/*
+	 * Removes the checked tasks. Called from the options menu.
+	 */
+	removeDoneTasks () {
+		let lines = this.noteEntry.get_text().split('\n');
+		lines = lines.filter((line) => line[0] !== TASK_DONE);
+		this.noteEntry.set_text(lines.join('\n'));
+		this.onlySave(false);
+	}
+
+	hasDoneTasks () {
+		return countTasks(this.noteEntry.get_text())[0] > 0;
+	}
+
 	//--------------------------------------------------------------------------
 	// Sticky note's size and position -----------------------------------------
 
+	/*
+	 * Coordinates are relative to the note's monitor. If this monitor isn't
+	 * connected anymore, the note is shown on the primary monitor instead.
+	 */
+	_getMonitor () {
+		return Main.layoutManager.monitors[this._monitor]
+		    ?? Main.layoutManager.primaryMonitor;
+	}
+
+	/*
+	 * Called when the monitors change, since their coordinates may be
+	 * different.
+	 */
+	updatePosition () {
+		this._setNotePosition();
+	}
+
 	_setNotePosition () {
-		let monitor = Main.layoutManager.primaryMonitor;
+		let monitor = this._getMonitor();
 
 		this.actor.set_position(
 			monitor.x + Math.floor(this._x),
@@ -619,7 +803,7 @@ export class NoteBox {
 	}
 
 	_onPressCommon (actor, event) {
-		this._redraw();
+		this.raise();
 		// The pointer can move faster than the note, so the motion events
 		// have to be received even when the pointer is outside of the actor
 		this._dragGrab = global.stage.grab(actor);
@@ -671,9 +855,26 @@ export class NoteBox {
 	_onRelease (actor, event) {
 		this._dragGrab?.dismiss();
 		this._dragGrab = null;
+		if (this._isMoving) {
+			this._updateMonitor();
+		}
 		this._isResizing = false;
 		this._isMoving = false;
 		this.onlySave();
+	}
+
+	/*
+	 * After a move, the note belongs to the monitor where it is now, and its
+	 * coordinates become relative to that monitor.
+	 */
+	_updateMonitor () {
+		let index = Main.layoutManager.findIndexForActor(this.actor);
+		let monitor = Main.layoutManager.monitors[index];
+		if (!monitor) { return; }
+		let [absX, absY] = this.actor.get_position();
+		this._monitor = index;
+		this._x = absX - monitor.x;
+		this._y = absY - monitor.y;
 	}
 
 	//--------------------------------------------------------------------------
@@ -694,6 +895,9 @@ export class NoteBox {
 	applyColorAndSave (r, g, b) {
 		this._applyColor(r, g, b)
 		this.onlySave();
+		if (this.pinned) {
+			State.notesManager.updatePinnedNotes();
+		}
 	}
 
 	//--------------------------------------------------------------------------
@@ -780,6 +984,7 @@ export class NoteBox {
 		                   + defaultPosition[1].toString() + ';'
 		                   + this.customColor + ';250;180;'
 		                   + this._fontSize + ';true;false;'
+		                   + Main.layoutManager.primaryIndex + ';;'
 		GLib.file_set_contents(fileName, defaultContent);
 		return defaultContent;
 	}
@@ -809,11 +1014,25 @@ export class NoteBox {
 		this.actor.height = Number(state[4]);
 		this._fontSize = Number(state[5]);
 		this.entry_is_visible = (state[6] == 'true');
-		// absent from the files saved by older versions of the extension
+		// The next values are absent from the files saved by older versions of
+		// the extension
 		this.hidden = (state[7] == 'true');
+		this._monitor = (state[8] === undefined || state[8] === '')
+			? Main.layoutManager.primaryIndex
+			: Number(state[8]);
+		this._title = '';
+		try {
+			this._title = decodeURIComponent(state[9] ?? '');
+		} catch (e) {
+			console.log('Invalid title for note n°' + this.id.toString());
+		}
+		this.pinned = (state[10] == 'true');
 	}
 
-	_saveState () {
+	/*
+	 * The title is encoded, so it can't contain the ';' separator.
+	 */
+	_getStateString () {
 		let noteState = '';
 		noteState += this._x.toString() + ';';
 		noteState += this._y.toString() + ';';
@@ -823,18 +1042,32 @@ export class NoteBox {
 		noteState += this._fontSize.toString() + ';';
 		noteState += this.entry_is_visible.toString() + ';';
 		noteState += this.hidden.toString() + ';';
+		noteState += this._monitor.toString() + ';';
+		noteState += encodeURIComponent(this._title) + ';';
+		noteState += this.pinned.toString() + ';';
+		return noteState;
+	}
 
-		//log('_saveState | ' + this.id.toString() + ' | ' + noteState);
+	_saveState () {
 		let file = GLib.build_filenamev([PATH, this.id.toString() + '_state']);
-		GLib.file_set_contents(file, noteState);
+		GLib.file_set_contents(file, this._getStateString());
 	}
 
 	//--------------------------------------------------------------------------
 
+	/*
+	 * The text and the state are kept by the NotesManager, so the deletion can
+	 * be cancelled.
+	 */
 	_deleteNoteObject () {
 		let noteId = this.id;
+		let text = this.noteEntry.get_text();
+		let state = this._getStateString();
 		this.destroy();
 		State.notesManager.postDelete(noteId);
+		if (text !== '') {
+			State.notesManager.onNoteDeleted(text, state);
+		}
 	}
 
 	destroy () {

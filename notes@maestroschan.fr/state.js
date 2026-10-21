@@ -9,5 +9,4 @@ export const State = {
 	extension: null,
 	notesManager: null,
 	settings: null,
-	autoFocus: false,
 };

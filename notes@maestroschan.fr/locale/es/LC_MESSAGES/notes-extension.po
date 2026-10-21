@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:26+0200\n"
+"POT-Creation-Date: 2026-10-21 11:38+0200\n"
 "PO-Revision-Date: 2022-09-06 17:25+0200\n"
 "Last-Translator: David Astillero Pérez <dastillero@gmail.com>\n"
 "Language-Team: Spanish\n"
@@ -19,6 +19,10 @@ msgstr ""
 "X-Generator: Poedit 2.4.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr ""
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr "Mostrar notas"
@@ -27,21 +31,60 @@ msgstr "Mostrar notas"
 msgid "Notes extension error: failed to load a note"
 msgstr "Error de extensión de notas: Hubo un error al cargar la nota"
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
-msgstr "Notas"
+#: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
+msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
-msgstr "Reinicia la extensión para aplicar los cambios"
+msgid "Undo"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Note options"
+msgid "Note hidden"
+msgstr "Opciones de nota"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "New note"
+msgstr "Mostrar notas"
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "Search notes…"
+msgstr "Mostrar notas"
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
+msgstr "Configuración"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "No matching note"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr "Editar título"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
+msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr "Personalizar color"
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr "Configuración"
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
 #: notes@maestroschan.fr/prefs.ui
@@ -52,6 +95,14 @@ msgstr "Aplicar"
 msgid "Font size"
 msgstr "Tamaño de fuente"
 
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
+msgstr ""
+
 #: notes@maestroschan.fr/noteBox.js
 msgid "Type here…"
 msgstr "Escribe aquí..."
@@ -61,28 +112,42 @@ msgid "New"
 msgstr "Nueva"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
-msgstr "Eliminar"
+msgid "Task"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "Opciones de nota"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Resize"
-msgstr "Modificar tamaño"
+msgid "Hide"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Empty note"
-msgstr "Nota vacía"
+msgid "Delete"
+msgstr "Eliminar"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Resize"
+msgstr "Modificar tamaño"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "¿Quieres eliminar esta nota?"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
+#, fuzzy
+#| msgid "Edit title"
+msgid "Note title"
 msgstr "Editar título"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Empty note"
+msgstr "Nota vacía"
 
 #: notes@maestroschan.fr/prefs.js
 msgid "Modifications will be effective after reloading the extension."
@@ -158,9 +223,9 @@ msgid ""
 "them). If you want to <b>get a copy of your notes</b>, this button opens the "
 "folder where they are."
 msgstr ""
-"Tus notas se guardan en el disco en diferentes ocasiones (principalmente cuando "
-"las ocultas). Si quieres <b>obtener una copia de tus notas</b>, este botón "
-"abre la carpeta donde se encuentran."
+"Tus notas se guardan en el disco en diferentes ocasiones (principalmente "
+"cuando las ocultas). Si quieres <b>obtener una copia de tus notas</b>, este "
+"botón abre la carpeta donde se encuentran."
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Open the storage directory"
@@ -206,6 +271,10 @@ msgid "Bring back to the primary monitor"
 msgstr "Devolver a la pantalla principal"
 
 #: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
+msgstr "Notas"
+
+#: notes@maestroschan.fr/prefs.ui
 msgid "Sticky notes for the GNOME Shell desktop."
 msgstr "Notas adhesivas para la interfaz GNOME Shell"
 
@@ -220,8 +289,8 @@ msgstr "Traducción:"
 #: notes@maestroschan.fr/prefs.ui
 msgid "translator-credits"
 msgstr ""
-"Carmen Ortega Mateos <ortegamateos.carmen@gmail.com>"
-"  David Astillero Pérez <datillero@gmail.com>"
+"Carmen Ortega Mateos <ortegamateos.carmen@gmail.com>  David Astillero Pérez "
+"<datillero@gmail.com>"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Report bugs or ideas"
@@ -243,3 +312,6 @@ msgstr "Las teclas modificadoras deben estar entre antilambdas"
 #: notes@maestroschan.fr/prefs.ui
 msgid "Don't use a keyboard shortcut that already exists."
 msgstr "No usar un atajo de teclado que ya exista."
+
+#~ msgid "Restart the extension to apply the changes"
+#~ msgstr "Reinicia la extensión para aplicar los cambios"

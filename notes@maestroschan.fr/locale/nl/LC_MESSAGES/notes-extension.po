@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:26+0200\n"
+"POT-Creation-Date: 2026-10-21 11:38+0200\n"
 "PO-Revision-Date: 2022-03-28 13:56+0200\n"
 "Last-Translator: Heimen Stoffels <vistausss@fastmail.com>\n"
 "Language-Team: Dutch <vistausss@outlook.com>\n"
@@ -18,6 +18,10 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.0.1\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr ""
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr "Notities tonen"
@@ -26,21 +30,60 @@ msgstr "Notities tonen"
 msgid "Notes extension error: failed to load a note"
 msgstr "Foutmelding: de notitie kan niet worden geladen"
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
-msgstr "Notities"
+#: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
+msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
-msgstr "Herlaad de uitbreiding om de wijzigingen toe te passen"
+msgid "Undo"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Note options"
+msgid "Note hidden"
+msgstr "Notitie-opties"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "New note"
+msgstr "Notities tonen"
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "Search notes…"
+msgstr "Notities tonen"
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
+msgstr "Voorkeuren"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "No matching note"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr "Naam wijzigen"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
+msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr "Eigen kleur kiezen"
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr "Voorkeuren"
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
 #: notes@maestroschan.fr/prefs.ui
@@ -51,6 +94,14 @@ msgstr "Toepassen"
 msgid "Font size"
 msgstr "Tekstgrootte"
 
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
+msgstr ""
+
 #: notes@maestroschan.fr/noteBox.js
 msgid "Type here…"
 msgstr "Typ hier…"
@@ -60,28 +111,42 @@ msgid "New"
 msgstr "Nieuw"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
-msgstr "Verwijderen"
+msgid "Task"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "Notitie-opties"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Resize"
-msgstr "Grootte aanpassen"
+msgid "Hide"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Empty note"
-msgstr "Blanco notitie"
+msgid "Delete"
+msgstr "Verwijderen"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Resize"
+msgstr "Grootte aanpassen"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "Wilt u deze notitie verwijderen?"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
+#, fuzzy
+#| msgid "Edit title"
+msgid "Note title"
 msgstr "Naam wijzigen"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Empty note"
+msgstr "Blanco notitie"
 
 #: notes@maestroschan.fr/prefs.js
 msgid "Modifications will be effective after reloading the extension."
@@ -201,6 +266,10 @@ msgid "Bring back to the primary monitor"
 msgstr "Terugzetten op primair beeldscherm"
 
 #: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
+msgstr "Notities"
+
+#: notes@maestroschan.fr/prefs.ui
 msgid "Sticky notes for the GNOME Shell desktop."
 msgstr "Plakbriefjes voor de GNOME Shell-werkomgeving."
 
@@ -237,3 +306,5 @@ msgstr "Sneltoetsen dienen tussen chevrons te worden geplaatst"
 msgid "Don't use a keyboard shortcut that already exists."
 msgstr "Deze sneltoets is al in gebruik."
 
+#~ msgid "Restart the extension to apply the changes"
+#~ msgstr "Herlaad de uitbreiding om de wijzigingen toe te passen"

@@ -61,6 +61,20 @@ class NotesSettingsWidget {
 
 		//----------------------------------------------------------------------
 
+		// Where the pinned notes are displayed
+		[
+			['pinned_panel_switch', 'pinned-in-panel'],
+			['pinned_overview_switch', 'pinned-in-overview'],
+		].forEach(([switchId, key]) => {
+			let pinned_switch = builder.get_object(switchId);
+			pinned_switch.set_state(SETTINGS.get_boolean(key));
+			pinned_switch.connect('notify::active', (widget) => {
+				SETTINGS.set_boolean(key, widget.active);
+			});
+		});
+
+		//----------------------------------------------------------------------
+
 		// The "hide icon" switch has to be build before the keybinding switch
 		this._hide_switch = builder.get_object('hide_switch');
 		this._hide_switch.set_state(SETTINGS.get_boolean('hide-icon'));

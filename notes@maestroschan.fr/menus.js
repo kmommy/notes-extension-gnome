@@ -27,6 +27,27 @@ const PRESET_COLORS = {
 
 //------------------------------------------------------------------------------
 
+function rgbToHex(rgb) {
+	return '#' + rgb.map((c) => Number(c).toString(16).padStart(2, '0')).join('');
+}
+
+/*
+ * Accepts '#rrggbb' or '#rgb' (the '#' is optional), and returns [r, g, b], or
+ * null if the text isn't a valid color.
+ */
+function parseHexColor(text) {
+	let hex = text.trim().replace(/^#/, '');
+	if (/^[0-9a-f]{3}$/i.test(hex)) {
+		hex = hex.split('').map((c) => c + c).join('');
+	}
+	if (!/^[0-9a-f]{6}$/i.test(hex)) {
+		return null;
+	}
+	return [0, 2, 4].map((i) => parseInt(hex.substring(i, i + 2), 16));
+}
+
+//------------------------------------------------------------------------------
+
 class NoteOptionsMenu extends Signals.EventEmitter {
 	constructor (source) {
 		super();
@@ -50,9 +71,25 @@ class NoteOptionsMenu extends Signals.EventEmitter {
 	_redisplay () {
 		this.super_menu.removeAll(); //-----------------------------------------
 
-	//	this.super_menu.addAction(_("Edit title"), this._onEditTitle.bind(this));
+		this.super_menu.addAction(_("Edit title"), this._onEditTitle.bind(this));
 
-	//	this._appendSeparator(); //---------------------------------------------
+		let pinItem = new PopupMenu.PopupSwitchMenuItem(
+			_("Show in the top bar and overview"),
+			this._source._note.pinned
+		);
+		pinItem.connect('toggled', (item, state) => {
+			this._source._note.setPinned(state);
+		});
+		this.super_menu.addMenuItem(pinItem);
+
+		if (this._source._note.hasDoneTasks()) {
+			this.super_menu.addAction(
+				_("Remove checked tasks"),
+				this._onRemoveDoneTasks.bind(this)
+			);
+		}
+
+		this._appendSeparator(); //---------------------------------------------
 
 		this.size_item = new PopupMenu.PopupBaseMenuItem({
 			reactive: false,
@@ -102,18 +139,6 @@ class NoteOptionsMenu extends Signals.EventEmitter {
 	}
 
 	_buildCustomColorMenu (colorSubmenu) {
-		this._customColorEntries = [];
-		let rgb = this._source._note.customColor.split(',');
-		this._addCustomColorEntry('#BB3322', rgb[0], colorSubmenu);
-		this._addCustomColorEntry('#22BB33', rgb[1], colorSubmenu);
-		this._addCustomColorEntry('#2233BB', rgb[2], colorSubmenu);
-
-		let applyMenuItem = new PopupMenu.PopupMenuItem(_("Apply"));
-		applyMenuItem.connect('activate', this._onApplyCustom.bind(this));
-		colorSubmenu.addMenuItem(applyMenuItem);
-	}
-
-	_addCustomColorEntry (bgColorCSS, textContent, colorSubmenu) {
 		let colorMenuItem = new PopupMenu.PopupBaseMenuItem({
 			reactive: false,
 			activate: false,
@@ -122,17 +147,25 @@ class NoteOptionsMenu extends Signals.EventEmitter {
 			can_focus: false
 		});
 
-		let colorEntry = new St.Entry({
+		let rgb = this._source._note.customColor.split(',');
+		this._hexEntry = new St.Entry({
+			text: rgbToHex(rgb),
+			hint_text: '#rrggbb',
 			can_focus: true,
 			track_hover: true,
-			x_expand: true
+			x_expand: true,
+			style_class: 'notesHexEntry',
 		});
-		colorEntry.set_text(textContent);
-		colorEntry.style = 'background-color: ' + bgColorCSS + '; color: #FFFFFF';
-
-		colorMenuItem.add_child(colorEntry);
-		this._customColorEntries.push(colorEntry);
+		this._hexEntry.clutter_text.connect('activate', this._onApplyCustom.bind(this));
+		this._hexEntry.clutter_text.connect('text-changed', () => {
+			this._hexEntry.remove_style_pseudo_class('error');
+		});
+		colorMenuItem.add_child(this._hexEntry);
 		colorSubmenu.addMenuItem(colorMenuItem);
+
+		let applyMenuItem = new PopupMenu.PopupMenuItem(_("Apply"));
+		applyMenuItem.connect('activate', this._onApplyCustom.bind(this));
+		colorSubmenu.addMenuItem(applyMenuItem);
 	}
 
 	_buildSizeItem () {
@@ -193,10 +226,17 @@ class NoteOptionsMenu extends Signals.EventEmitter {
 	}
 
 	_onApplyCustom () {
-		let r = Number(this._customColorEntries[0].get_text());
-		let g = Number(this._customColorEntries[1].get_text());
-		let b = Number(this._customColorEntries[2].get_text());
-		this._source._note.applyColorAndSave(r, g, b);
+		let rgb = parseHexColor(this._hexEntry.get_text());
+		if (rgb === null) {
+			this._hexEntry.add_style_pseudo_class('error');
+			return;
+		}
+		this._source._note.applyColorAndSave(rgb[0], rgb[1], rgb[2]);
+		this.super_menu.close();
+	}
+
+	_onRemoveDoneTasks () {
+		this._source._note.removeDoneTasks();
 	}
 
 	_onSettings () {

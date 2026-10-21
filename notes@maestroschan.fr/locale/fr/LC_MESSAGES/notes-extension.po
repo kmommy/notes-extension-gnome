@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-21 10:50+0200\n"
+"POT-Creation-Date: 2026-10-21 14:17+0200\n"
 "PO-Revision-Date: 2019-03-21 00:03+0100\n"
 "Last-Translator: Romain F. T. <rrroschan@gmail.com>\n"
 "Language-Team: French <none>\n"
@@ -32,39 +32,62 @@ msgid "Notes extension error: failed to load a note"
 msgstr "Erreur de l'extension notes : échec de chargement d'une note"
 
 #: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
+msgstr "Note supprimée"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Undo"
+msgstr "Annuler"
+
+#: notes@maestroschan.fr/extension.js
 msgid "Note hidden"
 msgstr "Note masquée"
 
 #: notes@maestroschan.fr/extension.js
 msgid "Right-click the notes icon in the top bar to show it again."
-msgstr "Faites un clic droit sur l’icône des notes dans la barre supérieure pour l’afficher à nouveau."
+msgstr ""
+"Faites un clic droit sur l’icône des notes dans la barre supérieure pour "
+"l’afficher à nouveau."
 
 #: notes@maestroschan.fr/extension.js
 msgid "New note"
 msgstr "Nouvelle note"
 
 #: notes@maestroschan.fr/extension.js
-msgid "Hidden notes"
-msgstr "Notes masquées"
+msgid "Search notes…"
+msgstr "Rechercher dans les notes…"
 
 #: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
 #: notes@maestroschan.fr/prefs.ui
 msgid "Settings"
 msgstr "Paramètres"
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
-msgstr "Notes"
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr "Notes masquées"
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
-msgstr "Redémarrer l'extension pour appliquer les changements"
+msgid "No matching note"
+msgstr "Aucune note correspondante"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr "Éditer le titre"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Show in the top bar and overview"
+msgstr "Afficher dans la barre et la vue d’ensemble"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
+msgstr "Supprimer les tâches cochées"
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr "Couleur personnalisée"
 
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
+#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
+#: notes@maestroschan.fr/prefs.ui
 msgid "Apply"
 msgstr "Appliquer"
 
@@ -89,6 +112,10 @@ msgid "New"
 msgstr "Nouveau"
 
 #: notes@maestroschan.fr/noteBox.js
+msgid "Task"
+msgstr "Tâche"
+
+#: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "Options de la note"
 
@@ -107,6 +134,14 @@ msgstr "Redimensionner"
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "Supprimer cette note?"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Note title"
+msgstr "Titre de la note"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
+msgstr "Laisser vide pour n'afficher aucun titre."
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Empty note"
@@ -153,6 +188,18 @@ msgstr "Au 1er plan, sur le bureau, masquer"
 #: notes@maestroschan.fr/prefs.ui
 msgid "Automatic focus"
 msgstr "Focus automatique"
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Pinned notes scroll in the top bar"
+msgstr "Notes épinglées défilant dans la barre supérieure"
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Notes are pinned with the option in their menu"
+msgstr "Les notes s’épinglent avec l’option de leur menu"
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Pinned notes in the overview"
+msgstr "Notes épinglées dans la vue d’ensemble"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Use a keyboard shortcut"
@@ -211,7 +258,8 @@ msgstr "Sauvegarde"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Explanations about how to use this extension can be found here:"
-msgstr "Des explications sur l’utilisation de cette extension sont disponibles ici :"
+msgstr ""
+"Des explications sur l’utilisation de cette extension sont disponibles ici :"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Online help manual"
@@ -229,6 +277,10 @@ msgstr ""
 #: notes@maestroschan.fr/prefs.ui
 msgid "Bring back to the primary monitor"
 msgstr "Ramener sur le moniteur principal"
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
+msgstr "Notes"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Sticky notes for the GNOME Shell desktop."
@@ -267,5 +319,5 @@ msgstr "Les touches modificatrices doivent être entre chevrons"
 msgid "Don't use a keyboard shortcut that already exists."
 msgstr "Ne pas utiliser un raccourci clavier qui existe déjà."
 
-#~ msgid "Edit title"
-#~ msgstr "Éditer le titre"
+#~ msgid "Restart the extension to apply the changes"
+#~ msgstr "Redémarrer l'extension pour appliquer les changements"

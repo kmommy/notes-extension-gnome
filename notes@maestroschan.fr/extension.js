@@ -12,9 +12,11 @@ import Meta from 'gi://Meta';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as NoteBox from './noteBox.js';
+import * as Ticker from './ticker.js';
 import {State} from './state.js';
 
 //------------------------------------------------------------------------------
@@ -38,7 +40,6 @@ export default class NotesExtension extends Extension {
 
 		State.extension = this;
 		SETTINGS = State.settings = this.getSettings();
-		State.autoFocus = SETTINGS.get_boolean('auto-focus'); // XXX crado
 
 		State.notesManager = new NotesManager();
 	}
@@ -68,11 +69,16 @@ class NotesManager {
 	constructor() {
 		// Initialisation of the button in the top panel
 		this.panel_button = new PanelMenu.Button(0.0, _("Show notes"), true);
-		let icon = new St.Icon({
+		this._icon = new St.Icon({
 			icon_name: 'document-edit-symbolic',
 			style_class: 'system-status-icon'
 		});
-		this.panel_button.add_child(icon);
+		// The text of the pinned notes scrolls next to the icon
+		this._ticker = new Ticker.PanelTicker();
+		let buttonBox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
+		buttonBox.add_child(this._icon);
+		buttonBox.add_child(this._ticker.actor);
+		this.panel_button.add_child(buttonBox);
 		if (Clutter.ClickGesture) {
 			// In recent versions of GNOME, the button-press-event signal is
 			// not emitted anymore for actors using gestures, such as the
@@ -99,6 +105,8 @@ class NotesManager {
 		this._menuManager.addMenu(this._menu);
 		this._hiddenNoteNotified = false;
 
+		this._overviewNotes = new Ticker.OverviewNotes(this._onOverviewCardClicked.bind(this));
+
 		this._updateIconVisibility();
 		// `0` is the position within the chosen box (here, the `right` one)
 		Main.panel.addToStatusArea('NotesButton', this.panel_button, 0, 'right');
@@ -114,6 +122,37 @@ class NotesManager {
 		// Initialisation of the signals connections
 		this._bindKeyboardShortcut();
 		this._connectAllSignals();
+
+		// Notifications allowing to cancel the deletion of a note
+		this._undoNotifications = new Set();
+
+		// If the notes were visible at the end of the previous session (or
+		// before the screen was locked), they're shown again. The notes are
+		// also loaded if the pinned ones have to be displayed.
+		if (SETTINGS.get_boolean('notes-visible') || this._pinnedNotesAreDisplayed()) {
+			if (Main.layoutManager._startingUp) {
+				this._startupId = Main.layoutManager.connect('startup-complete', () => {
+					Main.layoutManager.disconnect(this._startupId);
+					this._startupId = null;
+					this._restoreVisibleNotes();
+				});
+			} else {
+				this._restoreIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+					this._restoreIdleId = null;
+					this._restoreVisibleNotes();
+					return GLib.SOURCE_REMOVE;
+				});
+			}
+		}
+	}
+
+	_restoreVisibleNotes () {
+		if (!this._notesLoaded) {
+			this._loadAllNotes();
+		}
+		if (this._allNotes.length > 0 && SETTINGS.get_boolean('notes-visible')) {
+			this._showNotes();
+		}
 	}
 
 	_bindKeyboardShortcut () {
@@ -143,6 +182,7 @@ class NotesManager {
 		}
 		this._onlyHideNotes();
 		this._notesLoaded = true;
+		this.updatePinnedNotes();
 	}
 
 	//--------------------------------------------------------------------------
@@ -172,6 +212,19 @@ class NotesManager {
 			this._allNotes[deletedNoteId].onlySave();
 		}
 		this._deleteNoteFiles(this._allNotes.length);
+		this.updatePinnedNotes();
+	}
+
+	/*
+	 * Updates the scrolling text in the top bar and the cards in the overview,
+	 * which show the pinned notes. Called by the NoteBox objects when a pinned
+	 * note changes.
+	 */
+	updatePinnedNotes () {
+		let pinned = this._allNotes.filter((n) => n.pinned && !n.isEmpty());
+		this._ticker.setNotes(SETTINGS.get_boolean('pinned-in-panel') ? pinned : []);
+		this._overviewNotes.setNotes(SETTINGS.get_boolean('pinned-in-overview') ? pinned : []);
+		this._updateIconVisibility();
 	}
 
 	/*
@@ -195,6 +248,41 @@ class NotesManager {
 	}
 
 	/*
+	 * Called when a non-empty note has been deleted, with the content of its
+	 * files, to propose to cancel the deletion.
+	 */
+	onNoteDeleted (text, state) {
+		let source = MessageTray.getSystemSource();
+		let notification = new MessageTray.Notification({
+			source,
+			title: _("Note deleted"),
+			body: text.split('\n').find((line) => line.trim() !== '') ?? '',
+			isTransient: true,
+		});
+		notification.addAction(_("Undo"), () => {
+			this._restoreNote(text, state);
+		});
+		notification.connect('destroy', () => {
+			this._undoNotifications.delete(notification);
+		});
+		this._undoNotifications.add(notification);
+		source.addNotification(notification);
+	}
+
+	/*
+	 * The files of the deleted note are written again with the next id, and
+	 * the note is created from them.
+	 */
+	_restoreNote (text, state) {
+		let id = this._allNotes.length.toString();
+		GLib.file_set_contents(GLib.build_filenamev([PATH, id + '_state']), state);
+		GLib.file_set_contents(GLib.build_filenamev([PATH, id + '_text']), text);
+		this.createNote('', 16);
+		this._showNotes();
+		this.updatePinnedNotes();
+	}
+
+	/*
 	 * Called when a note is hidden with its own 'hide' button. The first time,
 	 * the user is told how to find the note again.
 	 */
@@ -214,6 +302,7 @@ class NotesManager {
 	_showNotes () {
 		this._menu.close();
 		this._notesAreVisible = true;
+		SETTINGS.set_boolean('notes-visible', true);
 		this._allNotes.forEach(function (n) {
 			n.show();
 		});
@@ -221,6 +310,10 @@ class NotesManager {
 
 	_hideNotes () {
 		this._onlyHideNotes();
+		SETTINGS.set_boolean('notes-visible', false);
+		if (this._timeout_id) {
+			GLib.source_remove(this._timeout_id);
+		}
 		this._timeout_id = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
 			this._timeout_id = null;
 			// saving to the disk is slightly delayed to give the illusion that
@@ -254,6 +347,28 @@ class NotesManager {
 		});
 	}
 
+	_pinnedNotesAreDisplayed () {
+		return SETTINGS.get_boolean('pinned-in-panel')
+		    || SETTINGS.get_boolean('pinned-in-overview');
+	}
+
+	_onPinnedSettingChanged () {
+		if (!this._notesLoaded) {
+			if (this._pinnedNotesAreDisplayed()) {
+				this._loadAllNotes();
+			}
+		} else {
+			this.updatePinnedNotes();
+		}
+	}
+
+	_onOverviewCardClicked (note) {
+		Main.overview.hide();
+		note.reveal();
+		this._showNotes();
+		note.raise();
+	}
+
 	_onPanelButtonClicked (mouseButton) {
 		if (mouseButton === Clutter.BUTTON_SECONDARY) {
 			this._openMenu();
@@ -273,16 +388,33 @@ class NotesManager {
 			this._showNotes();
 		}, 'list-add-symbolic');
 
-		let hiddenNotes = this._allNotes.filter((n) => n.hidden);
-		if (hiddenNotes.length > 0) {
-			this._menu.addMenuItem(
-				new PopupMenu.PopupSeparatorMenuItem(_("Hidden notes"))
-			);
-			hiddenNotes.forEach((n) => {
-				this._menu.addAction(n.getTitle(), () => {
-					n.reveal();
-					this._showNotes();
-				}, 'view-reveal-symbolic');
+		let searchEntry = null;
+		if (this._allNotes.length > 0) {
+			let searchItem = new PopupMenu.PopupBaseMenuItem({
+				reactive: false,
+				can_focus: false,
+			});
+			searchEntry = new St.Entry({
+				hint_text: _("Search notes…"),
+				can_focus: true,
+				x_expand: true,
+				style_class: 'search-entry',
+			});
+			searchItem.add_child(searchEntry);
+			this._menu.addMenuItem(searchItem);
+
+			let notesSection = new PopupMenu.PopupMenuSection();
+			this._menu.addMenuItem(notesSection);
+			this._fillNotesSection(notesSection, '');
+
+			searchEntry.clutter_text.connect('text-changed', () => {
+				this._fillNotesSection(notesSection, searchEntry.get_text());
+			});
+			searchEntry.clutter_text.connect('activate', () => {
+				// Enter opens the first result
+				notesSection._getMenuItems().find((item) => item.reactive)?.activate(
+					Clutter.get_current_event()
+				);
 			});
 		}
 
@@ -292,6 +424,44 @@ class NotesManager {
 		}, 'preferences-system-symbolic');
 
 		this._menu.open();
+		searchEntry?.grab_key_focus();
+	}
+
+	/*
+	 * Without query, the section lists the notes hidden individually, so they
+	 * can be shown again. With a query, it lists all the notes whose title or
+	 * text contains it.
+	 */
+	_fillNotesSection (section, query) {
+		section.removeAll();
+		query = query.trim().toLowerCase();
+
+		let notes;
+		if (query === '') {
+			notes = this._allNotes.filter((n) => n.hidden);
+			if (notes.length > 0) {
+				section.addMenuItem(
+					new PopupMenu.PopupSeparatorMenuItem(_("Hidden notes"))
+				);
+			}
+		} else {
+			notes = this._allNotes.filter((n) => n.matches(query));
+			if (notes.length === 0) {
+				section.addMenuItem(new PopupMenu.PopupMenuItem(
+					_("No matching note"),
+					{ reactive: false }
+				));
+			}
+		}
+
+		notes.forEach((n) => {
+			let icon = n.hidden ? 'view-reveal-symbolic' : 'document-edit-symbolic';
+			section.addAction(n.getTitle(), () => {
+				n.reveal();
+				this._showNotes();
+				n.raise();
+			}, icon);
+		});
 	}
 
 	_onButtonPressed () {
@@ -365,10 +535,26 @@ class NotesManager {
 			'changed::notes-kb-shortcut',
 			this._updateShortcut.bind(this)
 		);
-		this._settingsSignals['auto-focus'] = SETTINGS.connect(
-			'changed::auto-focus',
-			this._updateFocusSetting.bind(this)
+		this._settingsSignals['pinned-panel'] = SETTINGS.connect(
+			'changed::pinned-in-panel',
+			this._onPinnedSettingChanged.bind(this)
 		);
+		this._settingsSignals['pinned-overview'] = SETTINGS.connect(
+			'changed::pinned-in-overview',
+			this._onPinnedSettingChanged.bind(this)
+		);
+
+		this._monitorsChangedId = Main.layoutManager.connect(
+			'monitors-changed',
+			this._onMonitorsChanged.bind(this)
+		);
+	}
+
+	_onMonitorsChanged () {
+		this._allNotes.forEach(function (n) {
+			n.updatePosition();
+		});
+		this._overviewNotes.updatePosition();
 	}
 
 	_updateShortcut () {
@@ -378,17 +564,13 @@ class NotesManager {
 		this._bindKeyboardShortcut();
 	}
 
-	_updateFocusSetting () {
-		// XXX currently not very user-friendly
-		Main.notify(
-			_("Notes"),
-			_("Restart the extension to apply the changes")
-		);
-	}
-
+	/*
+	 * If the icon is hidden, the button stays visible as long as it shows the
+	 * text of pinned notes.
+	 */
 	_updateIconVisibility () {
-		let now_visible = !SETTINGS.get_boolean('hide-icon');
-		this.panel_button.visible = now_visible;
+		this._icon.visible = !SETTINGS.get_boolean('hide-icon');
+		this.panel_button.visible = this._icon.visible || this._ticker.actor.visible;
 	}
 
 	_bringToPrimaryMonitorOnly () {
@@ -430,7 +612,16 @@ class NotesManager {
 		SETTINGS.disconnect(this._settingsSignals['hide-icon']);
 		SETTINGS.disconnect(this._settingsSignals['kb-shortcut-1']);
 		SETTINGS.disconnect(this._settingsSignals['kb-shortcut-2']);
-		SETTINGS.disconnect(this._settingsSignals['auto-focus']);
+		SETTINGS.disconnect(this._settingsSignals['pinned-panel']);
+		SETTINGS.disconnect(this._settingsSignals['pinned-overview']);
+		Main.layoutManager.disconnect(this._monitorsChangedId);
+		if (this._startupId) {
+			Main.layoutManager.disconnect(this._startupId);
+		}
+		if (this._restoreIdleId) {
+			GLib.source_remove(this._restoreIdleId);
+		}
+		this._undoNotifications.forEach((n) => n.destroy());
 
 		this._allNotes.forEach(function (n) {
 			n.onlySave(false);
@@ -442,6 +633,8 @@ class NotesManager {
 		}
 
 		this._menu.destroy();
+		this._ticker.destroy();
+		this._overviewNotes.destroy();
 		this.panel_button.destroy();
 
 		if (this._timeout_id) {

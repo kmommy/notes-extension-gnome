@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-21 10:50+0200\n"
+"POT-Creation-Date: 2026-10-21 14:17+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,6 +30,14 @@ msgid "Notes extension error: failed to load a note"
 msgstr ""
 
 #: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "Undo"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
 msgid "Note hidden"
 msgstr ""
 
@@ -42,7 +50,7 @@ msgid "New note"
 msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Hidden notes"
+msgid "Search notes…"
 msgstr ""
 
 #: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
@@ -50,19 +58,32 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
 msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
+msgid "No matching note"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Show in the top bar and overview"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
 msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr ""
 
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
+#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
+#: notes@maestroschan.fr/prefs.ui
 msgid "Apply"
 msgstr ""
 
@@ -87,6 +108,10 @@ msgid "New"
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
+msgid "Task"
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr ""
 
@@ -104,6 +129,14 @@ msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Note title"
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
@@ -150,6 +183,18 @@ msgstr ""
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Automatic focus"
+msgstr ""
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Pinned notes scroll in the top bar"
+msgstr ""
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Notes are pinned with the option in their menu"
+msgstr ""
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Pinned notes in the overview"
 msgstr ""
 
 #: notes@maestroschan.fr/prefs.ui
@@ -216,6 +261,10 @@ msgstr ""
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Bring back to the primary monitor"
+msgstr ""
+
+#: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
 msgstr ""
 
 #: notes@maestroschan.fr/prefs.ui

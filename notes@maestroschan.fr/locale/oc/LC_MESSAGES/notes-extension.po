@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:28+0200\n"
+"POT-Creation-Date: 2026-10-21 11:38+0200\n"
 "PO-Revision-Date: 2023-02-08 21:07+0100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: \n"
@@ -17,6 +17,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.2.2\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr ""
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr "Afichar las nòtas"
@@ -25,21 +29,60 @@ msgstr "Afichar las nòtas"
 msgid "Notes extension error: failed to load a note"
 msgstr "Error de Notes extensions : cargament impossible de la nòta"
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
-msgstr "Nòtas"
+#: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
+msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
-msgstr "Reaviar l’extension per aplicar las modificacions"
+msgid "Undo"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Note options"
+msgid "Note hidden"
+msgstr "Opcions de nòta"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "New note"
+msgstr "Afichar las nòtas"
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "Search notes…"
+msgstr "Afichar las nòtas"
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
+msgstr "Paramètres"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "No matching note"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr "Modificar lo títol"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
+msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr "Color personalizada"
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr "Paramètres"
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
 #: notes@maestroschan.fr/prefs.ui
@@ -50,6 +93,14 @@ msgstr "Aplicar"
 msgid "Font size"
 msgstr "Talha de la polissa"
 
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
+msgstr ""
+
 #: notes@maestroschan.fr/noteBox.js
 msgid "Type here…"
 msgstr "Picatz aquí…"
@@ -59,28 +110,42 @@ msgid "New"
 msgstr "Novèl"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
-msgstr "Suprimir"
+msgid "Task"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "Opcions de nòta"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Resize"
-msgstr "Redimensionar"
+msgid "Hide"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Empty note"
-msgstr "Nòta voida"
+msgid "Delete"
+msgstr "Suprimir"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Resize"
+msgstr "Redimensionar"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "Suprimir aquesta nòta ?"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
+#, fuzzy
+#| msgid "Edit title"
+msgid "Note title"
 msgstr "Modificar lo títol"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Empty note"
+msgstr "Nòta voida"
 
 #: notes@maestroschan.fr/prefs.js
 msgid "Modifications will be effective after reloading the extension."
@@ -191,6 +256,10 @@ msgid "Bring back to the primary monitor"
 msgstr ""
 
 #: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
+msgstr "Nòtas"
+
+#: notes@maestroschan.fr/prefs.ui
 msgid "Sticky notes for the GNOME Shell desktop."
 msgstr ""
 
@@ -226,3 +295,6 @@ msgstr "Las claus de modificacions devon èsser entre croquets"
 #: notes@maestroschan.fr/prefs.ui
 msgid "Don't use a keyboard shortcut that already exists."
 msgstr "Utilizetz pas un acorchi de clavièr qu'existís ja."
+
+#~ msgid "Restart the extension to apply the changes"
+#~ msgstr "Reaviar l’extension per aplicar las modificacions"

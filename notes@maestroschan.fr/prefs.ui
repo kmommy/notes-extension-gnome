@@ -126,6 +126,52 @@
         </child>
 
         <child>
+          <object class="GtkLabel">
+            <property name="halign">end</property>
+            <property name="hexpand">False</property>
+            <property name="label" translatable="yes">Pinned notes scroll in the top bar</property>
+            <property name="tooltip-text" translatable="yes">Notes are pinned with the option in their menu</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">12</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSwitch" id="pinned_panel_switch">
+            <property name="hexpand">False</property>
+            <property name="halign">start</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">12</property>
+            </layout>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkLabel">
+            <property name="halign">end</property>
+            <property name="hexpand">False</property>
+            <property name="label" translatable="yes">Pinned notes in the overview</property>
+            <property name="tooltip-text" translatable="yes">Notes are pinned with the option in their menu</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">13</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSwitch" id="pinned_overview_switch">
+            <property name="hexpand">False</property>
+            <property name="halign">start</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">13</property>
+            </layout>
+          </object>
+        </child>
+
+        <child>
           <object class="GtkSeparator">
             <layout>
               <property name="column">0</property>

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:26+0200\n"
+"POT-Creation-Date: 2026-10-21 11:38+0200\n"
 "PO-Revision-Date: 2022-04-27 10:41+0800\n"
 "Last-Translator: Aerowolf <aerowolf@tom.com>\n"
 "Language-Team: \n"
@@ -14,6 +14,10 @@ msgstr ""
 "X-Generator: Lokalize 19.12.3\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr ""
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr "显示便签"
@@ -22,21 +26,60 @@ msgstr "显示便签"
 msgid "Notes extension error: failed to load a note"
 msgstr "便签扩展错误 : 载入便签失败"
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
+#: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
 msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
-msgstr "重启扩展并应用修改"
+msgid "Undo"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Note options"
+msgid "Note hidden"
+msgstr "便签选项"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "New note"
+msgstr "显示便签"
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "Search notes…"
+msgstr "显示便签"
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
+msgstr "设置"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "No matching note"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
+msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr "自定义色彩"
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr "设置"
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
 #: notes@maestroschan.fr/prefs.ui
@@ -47,6 +90,14 @@ msgstr "应用"
 msgid "Font size"
 msgstr "字体大小"
 
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
+msgstr ""
+
 #: notes@maestroschan.fr/noteBox.js
 msgid "Type here…"
 msgstr "在此处输入…"
@@ -56,30 +107,44 @@ msgid "New"
 msgstr "新建"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
-msgstr "删除"
+msgid "Task"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "便签选项"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Resize"
-msgstr "调整大小"
+msgid "Hide"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-#, fuzzy
-#| msgid "[Empty note]"
-msgid "Empty note"
-msgstr "[空白便签]"
+msgid "Delete"
+msgstr "删除"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Resize"
+msgstr "调整大小"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "删除此便签吗?"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
+#, fuzzy
+#| msgid "Note options"
+msgid "Note title"
+msgstr "便签选项"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
 msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+#, fuzzy
+#| msgid "[Empty note]"
+msgid "Empty note"
+msgstr "[空白便签]"
 
 #: notes@maestroschan.fr/prefs.js
 msgid "Modifications will be effective after reloading the extension."
@@ -196,6 +261,10 @@ msgid "Bring back to the primary monitor"
 msgstr "带回主屏"
 
 #: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
+msgstr ""
+
+#: notes@maestroschan.fr/prefs.ui
 msgid "Sticky notes for the GNOME Shell desktop."
 msgstr "GNOME Shell 桌面便签"
 
@@ -232,3 +301,5 @@ msgstr "修改器按键必须位于V形之间"
 msgid "Don't use a keyboard shortcut that already exists."
 msgstr "请勿使用已经存在的键盘快捷键。"
 
+#~ msgid "Restart the extension to apply the changes"
+#~ msgstr "重启扩展并应用修改"

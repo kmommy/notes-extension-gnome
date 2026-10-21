@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:26+0200\n"
+"POT-Creation-Date: 2026-10-21 11:38+0200\n"
 "PO-Revision-Date: 2022-01-13 11:03-0300\n"
 "Last-Translator: Clóvis Fabrício Costa <github.nosklo@0sg.net>\n"
 "Language-Team: Brazillian Portuguese\n"
@@ -18,6 +18,10 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.0.1\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr ""
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr "Mostrar notas"
@@ -26,21 +30,60 @@ msgstr "Mostrar notas"
 msgid "Notes extension error: failed to load a note"
 msgstr "Erro na extensão: Falhou ao carregar nota"
 
-#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
-msgid "Notes"
-msgstr "Notas"
+#: notes@maestroschan.fr/extension.js
+msgid "Note deleted"
+msgstr ""
 
 #: notes@maestroschan.fr/extension.js
-msgid "Restart the extension to apply the changes"
-msgstr "Reiniciar a extensão para aplicar mudanças"
+msgid "Undo"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Note options"
+msgid "Note hidden"
+msgstr "Opções de nota"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "New note"
+msgstr "Mostrar notas"
+
+#: notes@maestroschan.fr/extension.js
+#, fuzzy
+#| msgid "Show notes"
+msgid "Search notes…"
+msgstr "Mostrar notas"
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
+msgstr "Configurações"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "No matching note"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Edit title"
+msgstr "Editar título"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Remove checked tasks"
+msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Custom color"
 msgstr "Cor customizada"
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr "Configurações"
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
 #: notes@maestroschan.fr/prefs.ui
@@ -51,6 +94,14 @@ msgstr "Aplicar"
 msgid "Font size"
 msgstr "Tamanho da fonte"
 
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
+msgstr ""
+
 #: notes@maestroschan.fr/noteBox.js
 msgid "Type here…"
 msgstr "Digite aqui..."
@@ -60,28 +111,42 @@ msgid "New"
 msgstr "Nova"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
-msgstr "Deletar"
+msgid "Task"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "Opções de nota"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Resize"
-msgstr "Redimensionar"
+msgid "Hide"
+msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Empty note"
-msgstr "Nota vazia"
+msgid "Delete"
+msgstr "Deletar"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Resize"
+msgstr "Redimensionar"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "Deletar esta nota?"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
+#, fuzzy
+#| msgid "Edit title"
+msgid "Note title"
 msgstr "Editar título"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Leave empty to show no title."
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Empty note"
+msgstr "Nota vazia"
 
 #: notes@maestroschan.fr/prefs.js
 msgid "Modifications will be effective after reloading the extension."
@@ -199,6 +264,10 @@ msgid "Bring back to the primary monitor"
 msgstr "Trazer de volta para o monitor primário"
 
 #: notes@maestroschan.fr/prefs.ui
+msgid "Notes"
+msgstr "Notas"
+
+#: notes@maestroschan.fr/prefs.ui
 msgid "Sticky notes for the GNOME Shell desktop."
 msgstr "Notas afixadas para o desktop do GNOME Shell."
 
@@ -235,3 +304,5 @@ msgstr "Modificadores precisam estar entre menor e maior"
 msgid "Don't use a keyboard shortcut that already exists."
 msgstr "Não use um atalho de teclado que já existe."
 
+#~ msgid "Restart the extension to apply the changes"
+#~ msgstr "Reiniciar a extensão para aplicar mudanças"

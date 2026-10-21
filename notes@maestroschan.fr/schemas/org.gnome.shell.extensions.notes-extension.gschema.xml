@@ -48,6 +48,32 @@
       <description>Should be true only if there is shortcut.</description>
     </key>
 
+    <key type="b" name="notes-visible">
+      <default>false</default>
+      <summary>Notes are visible</summary>
+      <description>
+        If the notes were visible when the extension was disabled (for example
+        at the end of the session, or when the screen is locked), so they can be
+        shown again when it is enabled.
+      </description>
+    </key>
+
+    <key type="b" name="pinned-in-panel">
+      <default>true</default>
+      <summary>Pinned notes in the top bar</summary>
+      <description>
+        If the text of the pinned notes should scroll in the top bar, next to
+        the icon.
+      </description>
+    </key>
+    <key type="b" name="pinned-in-overview">
+      <default>true</default>
+      <summary>Pinned notes in the overview</summary>
+      <description>
+        If the pinned notes should be shown in the overview (Super key).
+      </description>
+    </key>
+
     <!-- -->
 
     <key type="b" name="ugly-hack">
