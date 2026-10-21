@@ -1,18 +1,30 @@
+
 /* Notes' "body" **************************************************************/
 
+/* The background color and the text color are set by the code */
 .noteBoxStyle {
 	padding: 0px;
 	margin: 0px;
+	border-radius: 12px;
+	box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .noteBoxStyle:hover {
-	box-shadow: 0px 0px 10px #000;
+	box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.45);
 }
 
-.notesTextField {
+.notesTextField,
+.notesTextField:hover,
+.notesTextField:focus {
+	background-color: transparent;
 	border-width: 0px;
 	border-radius: 0px;
 	box-shadow: none;
+	padding: 4px 12px;
+}
+
+.notesTextField StLabel.hint-text {
+	color: rgba(0, 0, 0, 0.45);
 }
 
 .notesBackground {
@@ -24,34 +36,69 @@
 /* Notes' headers and the buttons in them *************************************/
 
 .noteHeaderStyle {
-	spacing: 10px;
-	margin: 5px;
+	spacing: 2px;
+	padding: 6px 6px 0px 6px;
 }
 
 .notesTitleButton {
 	text-align: center;
 }
 
-.notesCircleButton {
-	border-width: 1px;
-	border-radius: 14px;
+/* Flat circular buttons, as in the headerbars of the GNOME apps */
+.notesHeaderboxButton {
+	border-radius: 999px;
 	height: 28px;
 	width: 28px;
-	border-style: solid;
-	border-color: black;
+	padding: 0px;
+	color: inherit;
+	background-color: transparent;
+	transition-duration: 150ms;
 }
 
-/* Intended to be used with notesCircleButton */
-.notesHeaderboxButton {
-	border-style: solid;
-	border-color: grey; /* TODO should be the same as the note's text */
+.notesHeaderboxButton:hover,
+.notesHeaderboxButton:focus {
+	background-color: rgba(0, 0, 0, 0.1);
 }
 
-.notesCircleButton:hover, .notesCircleButton:active {
-	border-width: 2px;
-	border-radius: 10px;
-	height: 26px;
-	width: 26px;
+.notesHeaderboxButton:active,
+.notesHeaderboxButton:checked {
+	background-color: rgba(0, 0, 0, 0.2);
 }
 
+/* Notes' footer **************************************************************/
 
+/* A corner in the lower-right corner of the note */
+.noteResizeGrip {
+	width: 10px;
+	height: 10px;
+	margin: 0px 8px 8px 0px;
+	border-right: 2px solid rgba(0, 0, 0, 0.35);
+	border-bottom: 2px solid rgba(0, 0, 0, 0.35);
+	border-radius: 0px 0px 4px 0px;
+}
+
+.noteResizeGrip:hover {
+	border-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Options menu ***************************************************************/
+
+.notesColorButton {
+	border-radius: 999px;
+	height: 28px;
+	width: 28px;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.notesColorButton:hover,
+.notesColorButton:focus {
+	border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.notesColorButton:checked {
+	border: 3px solid -st-accent-color;
+}
+
+.notesMenuButton {
+	margin-left: 4px;
+}

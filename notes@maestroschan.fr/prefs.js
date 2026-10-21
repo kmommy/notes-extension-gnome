@@ -2,36 +2,29 @@
 // GPL v3
 // Copyright 2018-2021 Romain F. T.
 
-const{ GObject, Gtk, Gdk, GdkPixbuf, GLib } = imports.gi;
-const Mainloop = imports.mainloop;
+import Gtk from 'gi://Gtk';
+import Gdk from 'gi://Gdk';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import GLib from 'gi://GLib';
 
-const Gettext = imports.gettext.domain('notes-extension');
-const _ = Gettext.gettext;
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
-function init() {
-	ExtensionUtils.initTranslations();
-}
-
-let SETTINGS = ExtensionUtils.getSettings();
+let SETTINGS;
 
 //------------------------------------------------------------------------------
 
-const NotesSettingsWidget = new GObject.Class({
-	Name: 'NotesSettingsWidget',
-	GTypeName: 'NotesSettingsWidget',
-
-	_init () {
+class NotesSettingsWidget {
+	constructor (prefs) {
+		this._prefs = prefs;
 		let builder = new Gtk.Builder();
-		builder.add_from_file(Me.path+'/prefs.ui');
+		builder.set_translation_domain(prefs.metadata['gettext-domain']);
+		builder.add_from_file(prefs.path + '/prefs.ui');
 		this.prefs_stack = builder.get_object('prefs_stack');
 
 		this._buildSettingsPage(builder);
 		this._buildHelpPage(builder);
 		this._buildAboutPage(builder);
-	},
+	}
 
 	//--------------------------------------------------------------------------
 
@@ -132,18 +125,18 @@ const NotesSettingsWidget = new GObject.Class({
 				rgba.blue.toString()
 			]);
 		});
-	},
+	}
 
 	_connectRadioBtn(strId, widget) {
 		widget.connect('toggled', (widget) => {
 			SETTINGS.set_string('layout-position', strId);
 		});
-	},
+	}
 
 	//--------------------------------------------------------------------------
 
 	_buildHelpPage(builder) {
-		let help_url = Me.metadata.url.toString();
+		let help_url = this._prefs.metadata.url.toString();
 		help_url += "/blob/master/user-help/README.md";
 		builder.get_object('help_btn').set_uri(help_url);
 
@@ -157,17 +150,17 @@ const NotesSettingsWidget = new GObject.Class({
 		reset_button.connect('clicked', (widget) => {
 			SETTINGS.set_boolean('ugly-hack', !SETTINGS.get_boolean('ugly-hack'));
 		});
-	},
+	}
 
 	//--------------------------------------------------------------------------
 
 	_buildAboutPage(builder) {
 		builder.get_object('about_icon').set_from_pixbuf(
-			GdkPixbuf.Pixbuf.new_from_file_at_size(Me.path +
+			GdkPixbuf.Pixbuf.new_from_file_at_size(this._prefs.path +
 		                             '/screenshots/about_picture.png', 163, 114)
 		);
 
-		let ext_version = _("Version %s").replace('%s', Me.metadata.version.toString());
+		let ext_version = _("Version %s").replace('%s', this._prefs.metadata.version.toString());
 		builder.get_object('label_version').set_label(ext_version)
 
 		let translation_credits = builder.get_object('translation_credits').get_label();
@@ -176,19 +169,20 @@ const NotesSettingsWidget = new GObject.Class({
 			builder.get_object('translation_credits').set_label('');
 		}
 
-		let ext_report_url = Me.metadata.url.toString();
+		let ext_report_url = this._prefs.metadata.url.toString();
 		builder.get_object('report_link_button').set_uri(ext_report_url);
 	}
-
-});
+}
 
 //------------------------------------------------------------------------------
 
-// I guess this is like the "enable" in extension.js : something called each
-// time he user try to access the settings' window
-function buildPrefsWidget() {
-	let widget = new NotesSettingsWidget();
-	return widget.prefs_stack;
+// Called each time the user tries to access the settings' window
+export default class NotesPreferences extends ExtensionPreferences {
+	getPreferencesWidget() {
+		SETTINGS = this.getSettings();
+		let widget = new NotesSettingsWidget(this);
+		return widget.prefs_stack;
+	}
 }
 
 //------------------------------------------------------------------------------

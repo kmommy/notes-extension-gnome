@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:28+0200\n"
+"POT-Creation-Date: 2026-10-21 10:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,12 +17,37 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr ""
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr ""
 
 #: notes@maestroschan.fr/extension.js
 msgid "Notes extension error: failed to load a note"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "Note hidden"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "New note"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr ""
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
 msgstr ""
 
 #: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
@@ -38,16 +63,19 @@ msgid "Custom color"
 msgstr ""
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr ""
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
-#: notes@maestroschan.fr/prefs.ui
 msgid "Apply"
 msgstr ""
 
 #: notes@maestroschan.fr/menus.js
 msgid "Font size"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr ""
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
@@ -59,11 +87,15 @@ msgid "New"
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
+msgid "Note options"
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Note options"
+msgid "Hide"
+msgstr ""
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Delete"
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
@@ -71,15 +103,11 @@ msgid "Resize"
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Empty note"
-msgstr ""
-
-#: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr ""
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
+msgid "Empty note"
 msgstr ""
 
 #: notes@maestroschan.fr/prefs.js

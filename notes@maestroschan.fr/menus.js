@@ -2,43 +2,39 @@
 // GPL v3
 // Copyright 2018-2021 Romain F. T.
 
-const { Clutter, St } = imports.gi;
-const Main = imports.ui.main;
-const PopupMenu = imports.ui.popupMenu;
-const ShellEntry = imports.ui.shellEntry;
-const Signals = imports.signals;
-const Util = imports.misc.util;
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Extension = Me.imports.extension;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as Signals from 'resource:///org/gnome/shell/misc/signals.js';
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const Gettext = imports.gettext.domain('notes-extension');
-const _ = Gettext.gettext;
+import {State} from './state.js';
 
+// The light colors of the GNOME color palette
 const PRESET_COLORS = {
-	'red': [200, 0, 0],
-	'green': [0, 150, 0],
-	'blue': [0, 0, 180],
+	'yellow': [249, 240, 107],
+	'orange': [255, 190, 111],
+	'red': [246, 97, 81],
+	'purple': [220, 138, 221],
 
-	'magenta': [255, 50, 255],
-	'yellow': [255, 255, 50],
-	'cyan': [0, 255, 255],
-
-	'white': [255, 255, 255],
-	'black': [50, 50, 50]
+	'blue': [153, 193, 241],
+	'green': [143, 240, 164],
+	'brown': [205, 171, 143],
+	'white': [255, 255, 255]
 };
 
 //------------------------------------------------------------------------------
 
-class NoteOptionsMenu {
+class NoteOptionsMenu extends Signals.EventEmitter {
 	constructor (source) {
-		this.super_menu = new PopupMenu.PopupMenu(source.actor, 0.2, St.Side.LEFT);
+		super();
+		this.super_menu = new PopupMenu.PopupMenu(source.actor, 0.5, St.Side.TOP);
 
 		// We want to keep the item hovered while the menu is up
 		this.super_menu.blockSourceEvents = true;
 		this._source = source;
-		this.super_menu.actor.add_style_class_name('app-well-menu');
 
 		// Chain our visibility and lifecycle to that of the source
 		source.actor.connect('notify::mapped', () => {
@@ -77,10 +73,10 @@ class NoteOptionsMenu {
 			style_class: null,
 			can_focus: false
 		});
+		this._addColorButton('yellow', 1);
+		this._addColorButton('orange', 1);
 		this._addColorButton('red', 1);
-		this._addColorButton('green', 1);
-		this._addColorButton('blue', 1);
-		this._addColorButton('black', 1);
+		this._addColorButton('purple', 1);
 		this.super_menu.addMenuItem(this.color1_item);
 
 		this.color2_item = new PopupMenu.PopupBaseMenuItem({
@@ -90,9 +86,9 @@ class NoteOptionsMenu {
 			style_class: null,
 			can_focus: false
 		});
-		this._addColorButton('cyan', 2);
-		this._addColorButton('magenta', 2);
-		this._addColorButton('yellow', 2);
+		this._addColorButton('blue', 2);
+		this._addColorButton('green', 2);
+		this._addColorButton('brown', 2);
 		this._addColorButton('white', 2);
 		this.super_menu.addMenuItem(this.color2_item);
 
@@ -134,7 +130,7 @@ class NoteOptionsMenu {
 		colorEntry.set_text(textContent);
 		colorEntry.style = 'background-color: ' + bgColorCSS + '; color: #FFFFFF';
 
-		colorMenuItem.actor.add_child(colorEntry);
+		colorMenuItem.add_child(colorEntry);
 		this._customColorEntries.push(colorEntry);
 		colorSubmenu.addMenuItem(colorMenuItem);
 	}
@@ -147,55 +143,47 @@ class NoteOptionsMenu {
 			y_align: Clutter.ActorAlign.CENTER,
 		});
 
-		let bigger = new St.Button({
-			style_class: 'button',
-			style: 'margin: 0px; padding-left: 8px; padding-right: 8px;',
-			child: new St.Icon({
-				icon_name: 'zoom-in-symbolic',
-				icon_size: 16,
-				style_class: 'system-status-icon',
-				x_expand: true,
-				y_expand: true,
-				x_align: Clutter.ActorAlign.CENTER,
-				y_align: Clutter.ActorAlign.CENTER,
-			}),
-		});
-		let smaller = new St.Button({
-			style_class: 'button',
-			style: 'margin: 0px; padding-left: 8px; padding-right: 8px;',
-			child: new St.Icon({
-				icon_name: 'zoom-out-symbolic',
-				icon_size: 16,
-				style_class: 'system-status-icon',
-				x_expand: true,
-				y_expand: true,
-				x_align: Clutter.ActorAlign.CENTER,
-				y_align: Clutter.ActorAlign.CENTER,
-			}),
-		});
+		let smaller = this._buildIconButton('list-remove-symbolic', _("Smaller"));
+		let bigger = this._buildIconButton('list-add-symbolic', _("Bigger"));
 
 		smaller.connect('clicked', this._onSmaller.bind(this));
 		bigger.connect('clicked', this._onBigger.bind(this));
 
-		this.size_item.actor.add_child(sizeLabel);
-		this.size_item.actor.add_child(smaller);
-		this.size_item.actor.add_child(bigger);
+		this.size_item.add_child(sizeLabel);
+		this.size_item.add_child(smaller);
+		this.size_item.add_child(bigger);
+	}
+
+	_buildIconButton (iconName, accessibleName) {
+		return new St.Button({
+			style_class: 'icon-button notesMenuButton',
+			accessible_name: accessibleName,
+			can_focus: true,
+			child: new St.Icon({
+				icon_name: iconName,
+				icon_size: 16,
+			}),
+		});
 	}
 
 	_addColorButton (color, line) {
 		let rgb = PRESET_COLORS[color];
 		let btn = new St.Button({
-			style_class: 'notesCircleButton',
+			style_class: 'notesColorButton',
 			style: 'background-color: rgb(' + rgb[0] + ','
 			                                + rgb[1] + ','
 			                                + rgb[2] + ');',
+			can_focus: true,
 			x_expand: true,
 			x_align: Clutter.ActorAlign.CENTER,
 		});
+		if (rgb.toString() === this._source._note.customColor) {
+			btn.add_style_pseudo_class('checked');
+		}
 		if (line == 1) {
-			this.color1_item.actor.add_child(btn);
+			this.color1_item.add_child(btn);
 		} else {
-			this.color2_item.actor.add_child(btn);
+			this.color2_item.add_child(btn);
 		}
 		btn.connect('clicked', this._onApply.bind(this, color));
 	}
@@ -212,12 +200,8 @@ class NoteOptionsMenu {
 	}
 
 	_onSettings () {
-		if (typeof ExtensionUtils.openPrefs === 'function') {
-			ExtensionUtils.openPrefs();
-		} else {
-			Util.spawn(['gnome-shell-extension-prefs', 'notes@maestroschan.fr']);
-		}
-		Extension.NOTES_MANAGER._hideNotes();
+		State.extension.openPreferences();
+		State.notesManager._hideNotes();
 	}
 
 	_onEditTitle () {
@@ -227,6 +211,7 @@ class NoteOptionsMenu {
 	_onApply (color, button) {
 		let rgb = PRESET_COLORS[color];
 		this._source._note.applyColorAndSave(rgb[0], rgb[1], rgb[2]);
+		this.super_menu.close();
 	}
 
 	popup (activatingButton) {
@@ -241,26 +226,22 @@ class NoteOptionsMenu {
 	_onSmaller () {
 		this._source._note.changeFontSize(-1);
 	}
-};
-Signals.addSignalMethods(NoteOptionsMenu.prototype);
+}
 
 //------------------------------------------------------------------------------
 
-var NoteRoundButton = class NoteRoundButton {
+export class NoteRoundButton extends Signals.EventEmitter {
 	constructor (note, icon, accessibleName) {
+		super();
 		this._note = note;
 		this.actor = new St.Button({
 			child: new St.Icon({
 				icon_name: icon,
 				icon_size: 16,
-				style_class: 'system-status-icon',
-				x_expand: true,
-				y_expand: true,
-				y_align: Clutter.ActorAlign.CENTER,
 			}),
 			accessible_name: accessibleName,
 			y_align: Clutter.ActorAlign.CENTER,
-			style_class: 'notesCircleButton notesHeaderboxButton',
+			style_class: 'notesHeaderboxButton',
 			reactive: true,
 			can_focus: true,
 			track_hover: true,
@@ -272,23 +253,17 @@ var NoteRoundButton = class NoteRoundButton {
 
 	addMenu () {
 		this._menu = null;
-		try {
-			// before 3.33, the constructor uses this.actor
-			this._menuManager = new PopupMenu.PopupMenuManager(this);
-		} catch (e) {
-			// after 3.33, the constructor uses directly the parameter
-			this._menuManager = new PopupMenu.PopupMenuManager(this.actor);
-		}
-		this.actor.connect('button-press-event', this.popupMenu.bind(this));
+		this._menuManager = new PopupMenu.PopupMenuManager(this.actor);
+		this.actor.connect('clicked', this.popupMenu.bind(this));
 	}
 
 	popupMenu () {
-		this.actor.fake_release();
 		if (!this._menu) {
 			this._menu = new NoteOptionsMenu(this);
 			this._menu.super_menu.connect('open-state-changed', (menu, isPoppedUp) => {
 				if (!isPoppedUp) {
 					this.actor.sync_hover();
+					this.emit('menu-state-changed', false);
 				}
 			});
 			this._menuManager.addMenu(this._menu.super_menu);
@@ -298,8 +273,11 @@ var NoteRoundButton = class NoteRoundButton {
 		this._menu.popup();
 		return false;
 	}
-};
-Signals.addSignalMethods(NoteRoundButton.prototype);
+
+	isMenuOpen () {
+		return this._menu?.super_menu.isOpen ?? false;
+	}
+}
 
 //------------------------------------------------------------------------------
 

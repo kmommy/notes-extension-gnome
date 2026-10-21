@@ -2,30 +2,30 @@
 // GPL v3
 // Copyright 2018-2021 Romain F. T.
 
-const { St, Clutter, GObject } = imports.gi;
-const ModalDialog = imports.ui.modalDialog;
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
 
-var CustomModalDialog = GObject.registerClass(
+import * as Dialog from 'resource:///org/gnome/shell/ui/dialog.js';
+import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+export const CustomModalDialog = GObject.registerClass(
 class CustomModalDialog extends ModalDialog.ModalDialog {
-	_init(textTitle, bodyWidget, textOkButton, callback) {
+	_init(textTitle, textDescription, textOkButton, callback) {
 		super._init();
-		let messageBox = new St.BoxLayout({vertical: true});
 
-		let titleLabel = new St.Label({
-			style: 'font-weight: bold; padding-bottom: 16px; width: 400px;',
-			x_align: Clutter.ActorAlign.CENTER,
-			text: textTitle,
+		// The same layout as the other dialogs of GNOME Shell
+		let content = new Dialog.MessageDialogContent({
+			title: textTitle,
+			description: textDescription,
 		});
-
-		messageBox.add_child(titleLabel);
-		messageBox.add_child(bodyWidget);
-		this.contentLayout.add_child(messageBox);
+		this.contentLayout.add_child(content);
 
 		// The method to add buttons is herited from ModalDialog
 		this.setButtons([{
 			label: _("Cancel"),
 			action: () => { this.close(); },
-			key: Clutter.Escape
+			key: Clutter.KEY_Escape
 		}, {
 			label: textOkButton,
 			action: () => {
@@ -35,4 +35,3 @@ class CustomModalDialog extends ModalDialog.ModalDialog {
 		}]);
 	}
 });
-

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-07 16:26+0200\n"
+"POT-Creation-Date: 2026-10-21 10:50+0200\n"
 "PO-Revision-Date: 2019-03-21 00:03+0100\n"
 "Last-Translator: Romain F. T. <rrroschan@gmail.com>\n"
 "Language-Team: French <none>\n"
@@ -19,6 +19,10 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Gtranslator 3.32.0\n"
 
+#: notes@maestroschan.fr/dialog.js
+msgid "Cancel"
+msgstr "Annuler"
+
 #: notes@maestroschan.fr/extension.js
 msgid "Show notes"
 msgstr "Montrer les notes"
@@ -26,6 +30,27 @@ msgstr "Montrer les notes"
 #: notes@maestroschan.fr/extension.js
 msgid "Notes extension error: failed to load a note"
 msgstr "Erreur de l'extension notes : échec de chargement d'une note"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Note hidden"
+msgstr "Note masquée"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Right-click the notes icon in the top bar to show it again."
+msgstr "Faites un clic droit sur l’icône des notes dans la barre supérieure pour l’afficher à nouveau."
+
+#: notes@maestroschan.fr/extension.js
+msgid "New note"
+msgstr "Nouvelle note"
+
+#: notes@maestroschan.fr/extension.js
+msgid "Hidden notes"
+msgstr "Notes masquées"
+
+#: notes@maestroschan.fr/extension.js notes@maestroschan.fr/menus.js
+#: notes@maestroschan.fr/prefs.ui
+msgid "Settings"
+msgstr "Paramètres"
 
 #: notes@maestroschan.fr/extension.js notes@maestroschan.fr/prefs.ui
 msgid "Notes"
@@ -40,17 +65,20 @@ msgid "Custom color"
 msgstr "Couleur personnalisée"
 
 #: notes@maestroschan.fr/menus.js notes@maestroschan.fr/prefs.ui
-msgid "Settings"
-msgstr "Paramètres"
-
-#: notes@maestroschan.fr/menus.js notes@maestroschan.fr/noteBox.js
-#: notes@maestroschan.fr/prefs.ui
 msgid "Apply"
 msgstr "Appliquer"
 
 #: notes@maestroschan.fr/menus.js
 msgid "Font size"
 msgstr "Taille du texte"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Smaller"
+msgstr "Plus petit"
+
+#: notes@maestroschan.fr/menus.js
+msgid "Bigger"
+msgstr "Plus grand"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Type here…"
@@ -61,28 +89,28 @@ msgid "New"
 msgstr "Nouveau"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Delete"
-msgstr "Supprimer"
-
-#: notes@maestroschan.fr/noteBox.js
 msgid "Note options"
 msgstr "Options de la note"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Hide"
+msgstr "Masquer"
+
+#: notes@maestroschan.fr/noteBox.js
+msgid "Delete"
+msgstr "Supprimer"
 
 #: notes@maestroschan.fr/noteBox.js
 msgid "Resize"
 msgstr "Redimensionner"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Empty note"
-msgstr "Note vide"
-
-#: notes@maestroschan.fr/noteBox.js
 msgid "Delete this note?"
 msgstr "Supprimer cette note?"
 
 #: notes@maestroschan.fr/noteBox.js
-msgid "Edit title"
-msgstr "Éditer le titre"
+msgid "Empty note"
+msgstr "Note vide"
 
 #: notes@maestroschan.fr/prefs.js
 msgid "Modifications will be effective after reloading the extension."
@@ -179,15 +207,15 @@ msgstr ""
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Backup"
-msgstr ""
+msgstr "Sauvegarde"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Explanations about how to use this extension can be found here:"
-msgstr ""
+msgstr "Des explications sur l’utilisation de cette extension sont disponibles ici :"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid "Online help manual"
-msgstr ""
+msgstr "Manuel d’aide en ligne"
 
 #: notes@maestroschan.fr/prefs.ui
 msgid ""
@@ -238,3 +266,6 @@ msgstr "Les touches modificatrices doivent être entre chevrons"
 #: notes@maestroschan.fr/prefs.ui
 msgid "Don't use a keyboard shortcut that already exists."
 msgstr "Ne pas utiliser un raccourci clavier qui existe déjà."
+
+#~ msgid "Edit title"
+#~ msgstr "Éditer le titre"

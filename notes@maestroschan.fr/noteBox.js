@@ -2,20 +2,19 @@
 // GPL v3
 // Copyright 2018-2021 Romain F. T.
 
-const { Clutter, St, GLib, Gio } = imports.gi;
-const Main = imports.ui.main;
-const ShellEntry = imports.ui.shellEntry;
-const GrabHelper = imports.ui.grabHelper;
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import Pango from 'gi://Pango';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as GrabHelper from 'resource:///org/gnome/shell/ui/grabHelper.js';
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const Menus = Me.imports.menus;
-const Extension = Me.imports.extension;
-const Dialog = Me.imports.dialog;
-
-const Gettext = imports.gettext.domain('notes-extension');
-const _ = Gettext.gettext;
+import * as Menus from './menus.js';
+import * as Dialog from './dialog.js';
+import {State} from './state.js';
 
 // ~/.local/share/notes@maestroschan.fr
 const PATH = GLib.build_pathv('/', [GLib.get_user_data_dir(), 'notes@maestroschan.fr']);
@@ -23,11 +22,14 @@ const PATH = GLib.build_pathv('/', [GLib.get_user_data_dir(), 'notes@maestroscha
 const MIN_HEIGHT = 75;
 const MIN_WIDTH = 200;
 
+// Delay (in milliseconds) between the last keystroke and the saving of the text
+const SAVE_DELAY = 1000;
+
 //------------------------------------------------------------------------------
 
 function stringFromArray(data){
 	if (data instanceof Uint8Array) {
-		return imports.byteArray.toString(data);
+		return new TextDecoder().decode(data);
 	} else {
 		return data.toString();
 	}
@@ -41,17 +43,18 @@ function stringFromArray(data){
  * other methods are here for managing note state through buttons, or to
  * interact with the NotesManager singleton.
  */
-var NoteBox = class NoteBox {
+export class NoteBox {
 	constructor (id, color, fontSize) {
 		this.id = id;
 		this._fontSize = fontSize;
+		this.hidden = false;
 		if (color.split(',').length == 3) {
 			this.customColor = color;
 		} else {
-			let c = Extension.SETTINGS.get_strv('first-note-rgb');
-			c[0] = c[0] * 255;
-			c[1] = c[1] * 255;
-			c[2] = c[2] * 255;
+			let c = State.settings.get_strv('first-note-rgb');
+			c[0] = Math.round(c[0] * 255);
+			c[1] = Math.round(c[1] * 255);
+			c[2] = Math.round(c[2] * 255);
 			this.customColor = c.toString();
 		}
 		this._buildNote();
@@ -60,7 +63,7 @@ var NoteBox = class NoteBox {
 	_buildNote () {
 		this.actor = new St.BoxLayout({
 			reactive: true,
-			vertical: true,
+			orientation: Clutter.Orientation.VERTICAL,
 			min_height: MIN_HEIGHT,
 			min_width: MIN_WIDTH,
 			style_class: 'noteBoxStyle',
@@ -96,7 +99,7 @@ var NoteBox = class NoteBox {
 		clutterText.set_single_line_mode(false);
 		clutterText.set_activatable(false); // we can press Enter
 		clutterText.set_line_wrap(true);
-		clutterText.set_line_wrap_mode(imports.gi.Pango.WrapMode.WORD_CHAR);
+		clutterText.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
 
 		this._entryBox = new St.BoxLayout({
 			reactive: true,
@@ -106,13 +109,15 @@ var NoteBox = class NoteBox {
 		});
 
 		this._entryBox.add_child(this.noteEntry);
-		this._scrollView.add_actor(this._entryBox); // yes, actually add_actor
+		this._scrollView.set_child(this._entryBox);
 		this.actor.add_child(this._scrollView);
+
+		this._buildFooter();
 
 		//----------------------------------------------------------------------
 
 		this._grabHelper = new GrabHelper.GrabHelper(this.noteEntry)
-		if (Extension.AUTO_FOCUS) { // TODO dynamically update this setting
+		if (State.autoFocus) { // TODO dynamically update this setting
 			this.noteEntry.connect('enter-event', this._getKeyFocus.bind(this));
 			this.noteEntry.connect('leave-event', this._leaveKeyFocus.bind(this));
 		} else {
@@ -120,18 +125,22 @@ var NoteBox = class NoteBox {
 			// this.noteEntry.connect('key-focus-in', this._redraw.bind(this)); // FIXME doesn't work
 			this.noteEntry.connect('leave-event', this._leaveKeyFocus.bind(this));
 		}
-		this.actor.connect('notify::hover', this._applyActorStyle.bind(this));
+		this.actor.connect('notify::hover', this._onHoverChanged.bind(this));
 
 		//----------------------------------------------------------------------
 
 		// Each note sets its own actor where it should be. This isn't a problem
 		// since the related setting isn't directly accessed, but is stored in
-		// 'Extension.NOTES_MANAGER' instead, which prevents inconsistencies.
+		// 'State.notesManager' instead, which prevents inconsistencies.
 		this.loadIntoCorrectLayer();
 		this._setNotePosition();
 		this._loadText();
 		// ShellEntry.addContextMenu(this.noteEntry); // FIXME doesn't work
 		this._initStyle();
+		this._onHoverChanged();
+
+		// Connected after the text is loaded, so loading doesn't trigger a save
+		clutterText.connect('text-changed', this._onTextChanged.bind(this));
 
 		this.grabX = this._x + 100;
 		this.grabY = this._y + 10;
@@ -141,20 +150,21 @@ var NoteBox = class NoteBox {
 	 * The headerbar contains the UI controls to manage the note:
 	 * - The 'new note' button creates a note with the same color and font size,
 	 *   but with random coordinates, an empty text, and an harcoded size.
-	 * - The 'delete' button asks the user to confirm if they really wants to
-	 *   delete the note (see `dialog.js`), and if yes the object is destroyed,
+	 * - The 'move' area, which isn't styled as a button but looks like an empty
+	 *   space. It simulates a kind of wacky window dragging.
+	 * - The 'options' button, showing a menu defined in menus.js
+	 * - The 'hide' button, which hides this note only. It can be shown again
+	 *   from the menu of the icon in the top bar.
+	 * - The 'delete' button deletes the note. If the note isn't empty, it asks
+	 *   the user to confirm (see `dialog.js`). Then the object is destroyed,
 	 *   and a method from the NotesManager is called to correctly delete the
 	 *   corresponding files.
-	 * - The 'move' button, which isn't styled as a button but looks like an
-	 *   empty space. It simulates a kind of wacky window dragging.
-	 * - The 'options' button, showing a menu defined in menus.js
-	 * - The 'resize' button, which uses the same dragging mecanism as 'move',
-	 *   to resize the note from its upper-right corner.
+	 * The buttons are only visible when the note is hovered.
 	 */
 	_buildHeaderbar () {
 		// This is the regular header, as described above.
 		this._buttonsBox = new St.BoxLayout({
-			vertical: false,
+			orientation: Clutter.Orientation.HORIZONTAL,
 			visible: true,
 			reactive: true,
 			x_expand: true,
@@ -170,45 +180,97 @@ var NoteBox = class NoteBox {
 		btnNew.actor.connect('clicked', this._createNote.bind(this));
 		this._buttonsBox.add_child(btnNew.actor);
 
-		let btnDelete = new Menus.NoteRoundButton(
-			this,
-			'user-trash-symbolic',
-			_("Delete")
-		);
-		btnDelete.actor.connect('clicked', this._openDeleteDialog.bind(this));
-		this._buttonsBox.add_child(btnDelete.actor);
-
-		this.moveBox = new St.Button({
+		// Not an St.Button, its click gesture would consume the press events
+		this.moveBox = new St.Widget({
 			x_expand: true,
+			reactive: true,
+			track_hover: true,
 			style_class: 'notesTitleButton',
 			// label: 'example title'
 		});
 		this._buttonsBox.add_child(this.moveBox);
 
-		let btnOptions = new Menus.NoteRoundButton(
+		this._btnOptions = new Menus.NoteRoundButton(
 			this,
 			'view-more-symbolic',
 			_("Note options")
 		);
-		btnOptions.addMenu();
-		this._buttonsBox.add_child(btnOptions.actor);
+		this._btnOptions.addMenu();
+		this._btnOptions.connect('menu-state-changed', this._onHoverChanged.bind(this));
+		this._buttonsBox.add_child(this._btnOptions.actor);
 
-		let ctrlButton = new Menus.NoteRoundButton(
+		let btnHide = new Menus.NoteRoundButton(
 			this,
-			'view-fullscreen-symbolic',
-			_("Resize")
+			'view-conceal-symbolic',
+			_("Hide")
 		);
-		this._buttonsBox.add_child(ctrlButton.actor);
+		btnHide.actor.connect('clicked', this._onHide.bind(this));
+		this._buttonsBox.add_child(btnHide.actor);
+
+		let btnDelete = new Menus.NoteRoundButton(
+			this,
+			'user-trash-symbolic',
+			_("Delete")
+		);
+		btnDelete.actor.connect('clicked', this._onDelete.bind(this));
+		this._buttonsBox.add_child(btnDelete.actor);
+
+		this._headerButtons = [
+			btnNew.actor,
+			this._btnOptions.actor,
+			btnHide.actor,
+			btnDelete.actor,
+		];
 
 		this.moveBox.connect('button-press-event', this._onMovePress.bind(this));
 		this.moveBox.connect('motion-event', this._onMoveMotion.bind(this));
 		this.moveBox.connect('button-release-event', this._onRelease.bind(this));
 
-		ctrlButton.actor.connect('button-press-event', this._onResizePress.bind(this));
-		ctrlButton.actor.connect('motion-event', this._onResizeMotion.bind(this));
-		ctrlButton.actor.connect('button-release-event', this._onRelease.bind(this));
-
 		this.actor.add_child(this._buttonsBox);
+	}
+
+	/*
+	 * The footer only contains a grip in the lower-right corner, which uses the
+	 * same dragging mecanism as 'move', to resize the note.
+	 */
+	_buildFooter () {
+		this._footer = new St.BoxLayout({
+			x_expand: true,
+			visible: this.entry_is_visible,
+		});
+		this._footer.add_child(new St.Widget({ x_expand: true }));
+
+		this._resizeGrip = new St.Widget({
+			reactive: true,
+			track_hover: true,
+			accessible_name: _("Resize"),
+			style_class: 'noteResizeGrip',
+		});
+		this._footer.add_child(this._resizeGrip);
+
+		this._resizeGrip.connect('button-press-event', this._onResizePress.bind(this));
+		this._resizeGrip.connect('motion-event', this._onResizeMotion.bind(this));
+		this._resizeGrip.connect('button-release-event', this._onRelease.bind(this));
+
+		this.actor.add_child(this._footer);
+	}
+
+	_onHoverChanged () {
+		if (this.actor == null) { return; }
+		this._applyActorStyle();
+		let showControls = this.actor.hover || this._btnOptions.isMenuOpen();
+		this._headerButtons.forEach((btn) => {
+			btn.opacity = showControls ? 255 : 0;
+		});
+		this._resizeGrip.opacity = showControls ? 255 : 0;
+	}
+
+	_onDelete () {
+		if (this.noteEntry.get_text() === '') {
+			this._deleteNoteObject();
+		} else {
+			this._openDeleteDialog();
+		}
 	}
 
 	_openDeleteDialog () {
@@ -219,38 +281,12 @@ var NoteBox = class NoteBox {
 			noteText = lines[0] + "\n" + lines[1] + "\n" + lines[2] + "\n[...]\n";
 			noteText += lines[lines.length - 2] + "\n" + lines[lines.length - 1];
 		}
-		if(noteText === "") {
-			noteText = "[" + _("Empty note") + "]";
-		}
-
-		let description_label = new St.Label({
-			style: 'padding-top: 16px;',
-			x_align: Clutter.ActorAlign.CENTER,
-			text: noteText,
-		});
 
 		let dialog = new Dialog.CustomModalDialog(
 			_("Delete this note?"),
-			description_label,
+			noteText,
 			_("Delete"),
 			this._deleteNoteObject.bind(this)
-		);
-		dialog.open();
-	}
-
-	openEditTitleDialog () {
-		let titleEntry = new St.Entry({
-			can_focus: true,
-			track_hover: true,
-			x_expand: true,
-			text: "todo load existing title"
-		});
-
-		let dialog = new Dialog.CustomModalDialog(
-			_("Edit title"),
-			titleEntry,
-			_("Apply"),
-			this._applyTitleChange.bind(this)
 		);
 		dialog.open();
 	}
@@ -268,35 +304,37 @@ var NoteBox = class NoteBox {
 	// "Public" methods called by NotesManager ---------------------------------
 
 	loadIntoCorrectLayer () {
-		if (Extension.NOTES_MANAGER.notesNeedChromeTracking()) {
-			Main.layoutManager.addChrome(this.actor, {
-				affectsInputRegion: true
-			});
+		if (State.notesManager.notesNeedChromeTracking()) {
+			Main.layoutManager.addChrome(this.actor);
+			this._isTracked = true;
 		} else {
 			Main.layoutManager._backgroundGroup.add_child(this.actor);
 		}
 	}
 
 	removeFromCorrectLayer () {
-		if (Extension.NOTES_MANAGER.notesNeedChromeTracking()) {
-//			Main.layoutManager.untrackChrome(this.actor);
+		if (State.notesManager.notesNeedChromeTracking()) {
 			Main.layoutManager.removeChrome(this.actor);
+			this._isTracked = false;
 		} else {
-			Main.layoutManager._backgroundGroup.remove_actor(this.actor);
+			Main.layoutManager._backgroundGroup.remove_child(this.actor);
 		}
 	}
 
 	show () {
+		if (this.hidden) { return; }
 		this.actor.visible = true;
-		if (Extension.NOTES_MANAGER.notesNeedChromeTracking()) {
+		if (State.notesManager.notesNeedChromeTracking() && !this._isTracked) {
 			Main.layoutManager.trackChrome(this.actor);
+			this._isTracked = true;
 		}
 	}
 
 	onlyHide () {
 		this.actor.visible = false;
-		if (Extension.NOTES_MANAGER.notesNeedChromeTracking()) {
+		if (this._isTracked) {
 			Main.layoutManager.untrackChrome(this.actor);
+			this._isTracked = false;
 		}
 	}
 
@@ -305,6 +343,32 @@ var NoteBox = class NoteBox {
 			this._saveState();
 		}
 		this._saveText();
+	}
+
+	/*
+	 * Makes a note hidden with the 'hide' button visible again. It will be
+	 * actually shown the next time the NotesManager shows the notes.
+	 */
+	reveal () {
+		this.hidden = false;
+		this._saveState();
+	}
+
+	/*
+	 * Returns the first non-empty line of the note, to identify it in menus.
+	 */
+	getTitle () {
+		let firstLine = this.noteEntry.get_text().split("\n").find((line) => {
+			return line.trim() !== '';
+		});
+		if (firstLine === undefined) {
+			return _("Empty note");
+		}
+		firstLine = firstLine.trim();
+		if (firstLine.length > 40) {
+			firstLine = firstLine.substring(0, 40) + '…';
+		}
+		return firstLine;
 	}
 
 	fixState () {
@@ -324,21 +388,16 @@ var NoteBox = class NoteBox {
 
 	//--------------------------------------------------------------------------
 
-	_applyTitleChange () {
-		// TODO
-		// ...
+	_onHide () {
+		this.hidden = true;
+		this.onlyHide();
 		this.onlySave();
+		State.notesManager.onNoteHidden();
 	}
 
 	_applyActorStyle () {
 		if (this.actor == null) { return; }
-		let is_hovered = this.actor.hover;
-		let temp;
-		if (is_hovered) {
-			temp = 'background-color: rgba(' + this.customColor + ', 0.8);';
-		} else {
-			temp = 'background-color: rgba(' + this.customColor + ', 0.6);';
-		}
+		let temp = 'background-color: rgb(' + this.customColor + ');';
 		if(this._fontColor != '') {
 			temp += 'color: ' + this._fontColor + ';';
 		}
@@ -346,7 +405,7 @@ var NoteBox = class NoteBox {
 	}
 
 	_applyNoteStyle () {
-		let temp = 'background-color: rgba(' + this.customColor + ', 0.8);';
+		let temp = '';
 		if(this._fontColor != '') {
 			temp += 'color: ' + this._fontColor + ';';
 		}
@@ -373,6 +432,17 @@ var NoteBox = class NoteBox {
 		this.onlySave();
 	}
 
+	_onTextChanged () {
+		if (this._saveTimeoutId) {
+			GLib.source_remove(this._saveTimeoutId);
+		}
+		this._saveTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, SAVE_DELAY, () => {
+			this._saveTimeoutId = null;
+			this._saveText();
+			return GLib.SOURCE_REMOVE;
+		});
+	}
+
 	//--------------------------------------------------------------------------
 	// Sticky note's size and position -----------------------------------------
 
@@ -389,21 +459,25 @@ var NoteBox = class NoteBox {
 		let mouseButton = event.get_button();
 		if (mouseButton == 3) {
 			this._entryBox.visible = !this._entryBox.visible;
+			this._footer.visible = this._entryBox.visible;
 			this.entry_is_visible = this._entryBox.visible;
 		}
-		this._onPressCommon(event);
+		this._onPressCommon(actor, event);
 		this._isMoving = true;
 		this._isResizing = false;
 	}
 
 	_onResizePress (actor, event) {
-		this._onPressCommon(event);
+		this._onPressCommon(actor, event);
 		this._isResizing = true;
 		this._isMoving = false;
 	}
 
-	_onPressCommon (event) {
+	_onPressCommon (actor, event) {
 		this._redraw();
+		// The pointer can move faster than the note, so the motion events
+		// have to be received even when the pointer is outside of the actor
+		this._dragGrab = global.stage.grab(actor);
 		this.grabX = Math.floor(event.get_coords()[0]);
 		this.grabY = Math.floor(event.get_coords()[1]);
 	}
@@ -415,18 +489,16 @@ var NoteBox = class NoteBox {
 		this._resizeTo(x, y);
 	}
 
+	/*
+	 * Resizes the note from its lower-right corner, so its position doesn't
+	 * change.
+	 */
 	_resizeTo (event_x, event_y) {
-		let newWidth = Math.abs(this.actor.width + (event_x - this.grabX));
-		let newHeight = Math.abs(this._y + this.actor.height - event_y + (this.grabY - this._y));
-		let newY = event_y - (this.grabY - this._y);
+		let newWidth = this.actor.width + (event_x - this.grabX);
+		let newHeight = this.actor.height + (event_y - this.grabY);
 
-		newWidth = Math.max(newWidth, MIN_WIDTH);
-		newHeight = Math.max(newHeight, MIN_HEIGHT);
-
-		this.actor.width = newWidth;
-		this.actor.height = newHeight;
-		this._y = newY;
-		this._setNotePosition();
+		this.actor.width = Math.max(newWidth, MIN_WIDTH);
+		this.actor.height = Math.max(newHeight, MIN_HEIGHT);
 
 		this.grabX = event_x;
 		this.grabY = event_y;
@@ -452,6 +524,8 @@ var NoteBox = class NoteBox {
 	}
 
 	_onRelease (actor, event) {
+		this._dragGrab?.dismiss();
+		this._dragGrab = null;
 		this._isResizing = false;
 		this._isMoving = false;
 		this.onlySave();
@@ -480,7 +554,7 @@ var NoteBox = class NoteBox {
 	//--------------------------------------------------------------------------
 
 	_createNote () {
-		Extension.NOTES_MANAGER.createNote(this.customColor, this._fontSize);
+		State.notesManager.createNote(this.customColor, this._fontSize);
 	}
 
 	/*
@@ -490,6 +564,9 @@ var NoteBox = class NoteBox {
 	 * the text coloration and the CSS is updated.
 	 */
 	_applyColor (r, g, b) {
+		r = Number(r);
+		g = Number(g);
+		b = Number(b);
 		if (Number.isNaN(r)) r = 255;
 		if (Number.isNaN(g)) g = 255;
 		if (Number.isNaN(b)) b = 255;
@@ -497,8 +574,9 @@ var NoteBox = class NoteBox {
 		g = Math.min(Math.max(0, g), 255);
 		b = Math.min(Math.max(0, b), 255);
 		this.customColor = r.toString() + ',' + g.toString() + ',' + b.toString();
-		if (r + g + b > 250) {
-			this._fontColor = '#000000';
+		// Perceived brightness of the color
+		if (0.299 * r + 0.587 * g + 0.114 * b > 140) {
+			this._fontColor = 'rgba(0, 0, 0, 0.8)';
 		} else {
 			this._fontColor = '#ffffff';
 		}
@@ -515,7 +593,7 @@ var NoteBox = class NoteBox {
 		let file = Gio.file_new_for_path(PATH + '/' + this.id.toString() + '_text');
 		let [result, contents] = file.load_contents(null);
 		if (!result) {
-			log('Could not read file: ' + PATH);
+			console.log('Could not read file: ' + PATH);
 		}
 		let content = stringFromArray(contents);
 
@@ -544,7 +622,7 @@ var NoteBox = class NoteBox {
 			x = Math.random() * (Main.layoutManager.primaryMonitor.width - 300);
 			y = Math.random() * (Main.layoutManager.primaryMonitor.height - 100);
 
-			if (Extension.NOTES_MANAGER.areCoordsUsable(x, y)) {
+			if (State.notesManager.areCoordsUsable(x, y)) {
 				return [x, y];
 			}
 		}
@@ -556,7 +634,7 @@ var NoteBox = class NoteBox {
 		let defaultContent = defaultPosition[0].toString() + ';'
 		                   + defaultPosition[1].toString() + ';'
 		                   + this.customColor + ';250;180;'
-		                   + this._fontSize + ';true;'
+		                   + this._fontSize + ';true;false;'
 		GLib.file_set_contents(fileName, defaultContent);
 		return defaultContent;
 	}
@@ -572,7 +650,7 @@ var NoteBox = class NoteBox {
 		let [result, contents] = file.load_contents(null);
 		let stringContent;
 		if (!result) {
-			log("Could not read sticky note state file: " + fname);
+			console.log("Could not read sticky note state file: " + fname);
 			stringContent = this._createDefaultState(fname);
 		} else {
 			stringContent = stringFromArray(contents);
@@ -586,6 +664,8 @@ var NoteBox = class NoteBox {
 		this.actor.height = Number(state[4]);
 		this._fontSize = Number(state[5]);
 		this.entry_is_visible = (state[6] == 'true');
+		// absent from the files saved by older versions of the extension
+		this.hidden = (state[7] == 'true');
 	}
 
 	_saveState () {
@@ -597,6 +677,7 @@ var NoteBox = class NoteBox {
 		noteState += this.actor.height.toString() + ';';
 		noteState += this._fontSize.toString() + ';';
 		noteState += this.entry_is_visible.toString() + ';';
+		noteState += this.hidden.toString() + ';';
 
 		//log('_saveState | ' + this.id.toString() + ' | ' + noteState);
 		let file = GLib.build_filenamev([PATH, this.id.toString() + '_state']);
@@ -608,15 +689,20 @@ var NoteBox = class NoteBox {
 	_deleteNoteObject () {
 		let noteId = this.id;
 		this.destroy();
-		Extension.NOTES_MANAGER.postDelete(noteId);
+		State.notesManager.postDelete(noteId);
 	}
 
 	destroy () {
+		if (this._saveTimeoutId) {
+			GLib.source_remove(this._saveTimeoutId);
+			this._saveTimeoutId = null;
+		}
+		this._dragGrab?.dismiss();
+		this._dragGrab = null;
 		this.actor.destroy_all_children();
 		this.actor.destroy();
 		this.actor = null;
 	}
-};
+}
 
 //------------------------------------------------------------------------------
-

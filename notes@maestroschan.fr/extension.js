@@ -2,59 +2,53 @@
 // GPL v3
 // Copyright 2018-2021 Romain F. T.
 
-const { St, Shell, GLib, Gio, Meta } = imports.gi;
-const PanelMenu = imports.ui.panelMenu;
-const Panel = imports.ui.panel;
-const Main = imports.ui.main;
-const Mainloop = imports.mainloop;
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
+import Shell from 'gi://Shell';
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import Meta from 'gi://Meta';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const NoteBox = Me.imports.noteBox;
-
-const Gettext = imports.gettext.domain('notes-extension');
-const _ = Gettext.gettext;
+import * as NoteBox from './noteBox.js';
+import {State} from './state.js';
 
 //------------------------------------------------------------------------------
 
 const PATH = GLib.build_pathv('/', [GLib.get_user_data_dir(), 'notes@maestroschan.fr']);
 // which is usually ~/.local/share/notes@maestroschan.fr
 
-var NOTES_MANAGER;
-var SETTINGS;
-var LAYER_SETTING;
-var AUTO_FOCUS;
+let SETTINGS;
+let LAYER_SETTING = '';
 
-function init() {
-	ExtensionUtils.initTranslations();
-	try {
-		let a = Gio.file_new_for_path(PATH);
-		if (!a.query_exists(null)) {
-			a.make_directory(null);
+export default class NotesExtension extends Extension {
+	enable() {
+		try {
+			let a = Gio.file_new_for_path(PATH);
+			if (!a.query_exists(null)) {
+				a.make_directory(null);
+			}
+		} catch (e) {
+			console.log(e.message);
 		}
-	} catch (e) {
-		log(e.message);
-	}
-	LAYER_SETTING = '';
-}
 
-function enable() {
-	SETTINGS = ExtensionUtils.getSettings();
-	AUTO_FOCUS = SETTINGS.get_boolean('auto-focus'); // XXX crado
+		State.extension = this;
+		SETTINGS = State.settings = this.getSettings();
+		State.autoFocus = SETTINGS.get_boolean('auto-focus'); // XXX crado
 
-	NOTES_MANAGER = new NotesManager();
-}
-
-function disable() {
-	NOTES_MANAGER.destroy();
-
-	if (NOTES_MANAGER) {
-		NOTES_MANAGER = null;
+		State.notesManager = new NotesManager();
 	}
 
-	if (SETTINGS) {
-		SETTINGS = null;
+	disable() {
+		State.notesManager?.destroy();
+		State.notesManager = null;
+
+		SETTINGS = State.settings = null;
+		State.extension = null;
 	}
 }
 
@@ -64,6 +58,8 @@ function disable() {
  * A singleton that manages the button in the top bar, and thus provides the
  * actions of loading, showing, hiding, creating (and in some way saving and
  * destroying) all the notes.
+ * A left click on the button shows or hides the notes, and a right click opens
+ * a menu to create a note, or show again the notes hidden individually.
  * If no note exists, it will create the first one itself, otherwise it serves
  * as a middleman between the note whose "new" button has been pressed and the
  * new one.
@@ -71,16 +67,38 @@ function disable() {
 class NotesManager {
 	constructor() {
 		// Initialisation of the button in the top panel
-		this.panel_button = new PanelMenu.Button(0.0, _("Show notes"), false);
+		this.panel_button = new PanelMenu.Button(0.0, _("Show notes"), true);
 		let icon = new St.Icon({
 			icon_name: 'document-edit-symbolic',
 			style_class: 'system-status-icon'
 		});
 		this.panel_button.add_child(icon);
-		this.panel_button.connect(
-			'button-press-event',
-			this._onButtonPressed.bind(this)
-		);
+		if (Clutter.ClickGesture) {
+			// In recent versions of GNOME, the button-press-event signal is
+			// not emitted anymore for actors using gestures, such as the
+			// panel buttons
+			let clickGesture = new Clutter.ClickGesture();
+			clickGesture.set_recognize_on_press(true);
+			clickGesture.connect('recognize', () => {
+				this._onPanelButtonClicked(clickGesture.get_button());
+			});
+			this.panel_button.add_action(clickGesture);
+		} else {
+			this.panel_button.connect('button-press-event', (actor, event) => {
+				this._onPanelButtonClicked(event.get_button());
+			});
+		}
+
+		// The menu isn't given to the panel button with setMenu(), otherwise
+		// the button would open it on every click
+		this._menu = new PopupMenu.PopupMenu(this.panel_button, 0.5, St.Side.TOP);
+		this._menu.actor.add_style_class_name('panel-menu');
+		Main.uiGroup.add_child(this._menu.actor);
+		this._menu.actor.hide();
+		this._menuManager = new PopupMenu.PopupMenuManager(this.panel_button);
+		this._menuManager.addMenu(this._menu);
+		this._hiddenNoteNotified = false;
+
 		this._updateIconVisibility();
 		// `0` is the position within the chosen box (here, the `right` one)
 		Main.panel.addToStatusArea('NotesButton', this.panel_button, 0, 'right');
@@ -136,8 +154,8 @@ class NotesManager {
 			this._allNotes.push(new NoteBox.NoteBox(nextId, colorString, fontSize));
 		} catch (e) {
 			Main.notify(_("Notes extension error: failed to load a note"));
-			log('failed to create note n°' + nextId.toString());
-			log(e);
+			console.error('failed to create note n°' + nextId.toString());
+			console.error(e);
 		}
 	}
 
@@ -176,9 +194,25 @@ class NotesManager {
 		return this._layerId == 'above-all';
 	}
 
+	/*
+	 * Called when a note is hidden with its own 'hide' button. The first time,
+	 * the user is told how to find the note again.
+	 */
+	onNoteHidden () {
+		if (this._hiddenNoteNotified) {
+			return;
+		}
+		this._hiddenNoteNotified = true;
+		Main.notify(
+			_("Note hidden"),
+			_("Right-click the notes icon in the top bar to show it again.")
+		);
+	}
+
 	//--------------------------------------------------------------------------
 
 	_showNotes () {
+		this._menu.close();
 		this._notesAreVisible = true;
 		this._allNotes.forEach(function (n) {
 			n.show();
@@ -187,7 +221,7 @@ class NotesManager {
 
 	_hideNotes () {
 		this._onlyHideNotes();
-		this._timeout_id = Mainloop.timeout_add(10, () => {
+		this._timeout_id = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
 			this._timeout_id = null;
 			// saving to the disk is slightly delayed to give the illusion that
 			// the extension doesn't freeze the system
@@ -209,8 +243,55 @@ class NotesManager {
 		let filePathBeginning = PATH + '/' + id.toString();
 		let textfile = Gio.file_new_for_path(filePathBeginning + '_text');
 		let statefile = Gio.file_new_for_path(filePathBeginning + '_state');
-		textfile.delete(null); // may not do anything
-		statefile.delete(null); // may not do anything
+		[textfile, statefile].forEach((file) => {
+			try {
+				file.delete(null);
+			} catch (e) {
+				// the file may not exist
+				if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+					throw e;
+			}
+		});
+	}
+
+	_onPanelButtonClicked (mouseButton) {
+		if (mouseButton === Clutter.BUTTON_SECONDARY) {
+			this._openMenu();
+		} else {
+			this._onButtonPressed();
+		}
+	}
+
+	_openMenu () {
+		if(!this._notesLoaded) {
+			this._loadAllNotes();
+		}
+		this._menu.removeAll();
+
+		this._menu.addAction(_("New note"), () => {
+			this.createNote('', 16);
+			this._showNotes();
+		}, 'list-add-symbolic');
+
+		let hiddenNotes = this._allNotes.filter((n) => n.hidden);
+		if (hiddenNotes.length > 0) {
+			this._menu.addMenuItem(
+				new PopupMenu.PopupSeparatorMenuItem(_("Hidden notes"))
+			);
+			hiddenNotes.forEach((n) => {
+				this._menu.addAction(n.getTitle(), () => {
+					n.reveal();
+					this._showNotes();
+				}, 'view-reveal-symbolic');
+			});
+		}
+
+		this._menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+		this._menu.addAction(_("Settings"), () => {
+			State.extension.openPreferences();
+		}, 'preferences-system-symbolic');
+
+		this._menu.open();
 	}
 
 	_onButtonPressed () {
@@ -250,6 +331,9 @@ class NotesManager {
 			this._hideNotes();
 		} else if (preventReshowing) {
 			this._notesAreVisible = true;
+		} else if (this._allNotes.every((n) => n.hidden)) {
+			// showing the notes would do nothing, so the user has to choose
+			this._openMenu();
 		} else {
 			this._showNotes();
 		}
@@ -357,14 +441,15 @@ class NotesManager {
 			Main.wm.removeKeybinding('notes-kb-shortcut');
 		}
 
+		this._menu.destroy();
 		this.panel_button.destroy();
 
 		if (this._timeout_id) {
-			Mainloop.source_remove(this._timeout_id);
+			GLib.source_remove(this._timeout_id);
 			this._timeout_id = null;
 		}
 	}
-};
+}
 
 //------------------------------------------------------------------------------
 
